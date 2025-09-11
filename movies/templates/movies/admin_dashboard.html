@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visitor Dashboard — Rwanda Film Vault</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #f0f4ff; padding: 20px; font-family: 'Arial', sans-serif; }
+        h1 { color: #0d6efd; }
+        .badge-online { background-color: #28a745; color: #fff; }
+        .badge-offline { background-color: #fd7e14; color: #fff; }
+        .table thead { background-color: #0d6efd; color: #fff; }
+        .table tbody tr:hover { background-color: rgba(13,110,253,0.1); }
+        .stats-card { border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #fff; margin-bottom: 20px; }
+        .stats-card .icon { font-size: 30px; opacity: 0.8; }
+        .stats-card.visits { background-color: #0d6efd; }
+        .stats-card.online { background-color: #28a745; }
+        .stats-card.offline { background-color: #fd7e14; }
+        #visitors-table { border-radius: 12px; overflow: hidden; }
+        #map { border-radius: 12px; border: 2px solid #0d6efd; }
+        .back-link { margin-bottom: 20px; display: inline-block; color: #0d6efd; text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+
+    <!-- Back Link -->
+    <a href="{% url 'admin:index' %}" class="back-link">&#8592; Back to Admin Dashboard</a>
+
+    <h1 class="text-center mb-4">Visitor Dashboard</h1>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card visits text-center">
+                <div class="icon mb-2">&#128101;</div>
+                <h5>Total Visitors</h5>
+                <h3 id="total-visitors">0</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card online text-center">
+                <div class="icon mb-2">&#128994;</div>
+                <h5>Online Visitors</h5>
+                <h3 id="online-visitors">0</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card offline text-center">
+                <div class="icon mb-2">&#128308;</div>
+                <h5>Offline Visitors</h5>
+                <h3 id="offline-visitors">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <input type="text" id="visitor-search" class="form-control mb-3" placeholder="Search visitors by Name, IP, Country, City...">
+
+    <!-- Visitor Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center" id="visitors-table">
+            <thead>
+                <tr>
+                    <th>Name / IP</th>
+                    <th>Country</th>
+                    <th>City</th>
+                    <th>Status</th>
+                    <th>Visit Count</th>
+                    <th>Last Visit</th>
+                    <th>Last Watched Movie</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mt-5">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">Daily Visits (Last 7 Days)</div>
+                <div class="card-body">
+                    <canvas id="daily-visits-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">Visitors by Country</div>
+                <div class="card-body">
+                    <canvas id="country-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- World Map -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">Visitor Map</div>
+                <div class="card-body">
+                    <div id="map" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function loadVisitors() {
+    const res = await fetch("{% url 'visitor_stats_api' %}");
+    const data = await res.json();
+
+    // Update summary cards
+    document.getElementById('total-visitors').textContent = data.visitors.length;
+    document.getElementById('online-visitors').textContent = data.visitors.filter(v => v.online).length;
+    document.getElementById('offline-visitors').textContent = data.visitors.filter(v => !v.online).length;
+
+    // Populate table
+    const tbody = document.querySelector("#visitors-table tbody");
+    tbody.innerHTML = "";
+    data.visitors.forEach(v => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${v.name}</td>
+            <td>${v.country}</td>
+            <td>${v.city}</td>
+            <td>
+                <span class="badge ${v.online ? 'badge-online' : 'badge-offline'}">
+                    ${v.online ? '&#128994; Online' : '&#128308; Offline'}
+                </span>
+            </td>
+            <td>${v.visit_count}</td>
+            <td>${v.last_visit}</td>
+            <td>${v.last_movie}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Search filter
+document.getElementById('visitor-search').addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('#visitors-table tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+});
+
+// Charts
+async function loadCharts() {
+    const dailyRes = await fetch("{% url 'visitor_chart_data' %}");
+    const dailyData = await dailyRes.json();
+    const ctx1 = document.getElementById('daily-visits-chart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: dailyData.data.map(d => d.date),
+            datasets: [{
+                label: 'Visits',
+                data: dailyData.data.map(d => d.count),
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13,110,253,0.2)',
+                tension: 0.3,
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    const countryRes = await fetch("{% url 'visitor_country_data' %}");
+    const countryData = await countryRes.json();
+    const ctx2 = document.getElementById('country-chart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: countryData.data.map(d => d.country || 'Unknown'),
+            datasets: [{
+                label: 'Visitors',
+                data: countryData.data.map(d => d.count),
+                backgroundColor: 'orange'
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+// Map
+async function loadMap() {
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+    const res = await fetch("{% url 'visitor_map_data' %}");
+    const data = await res.json();
+    data.data.forEach(v => {
+        L.circleMarker([v.lat, v.lng], {
+            radius: 8,
+            fillColor: v.online ? '#28a745' : '#fd7e14',
+            color: '#000',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map)
+          .bindPopup(`<strong>${v.ip}</strong><br>${v.country}, ${v.city}<br>${v.online ? 'Online' : 'Offline'}`);
+    });
+}
+
+// Load all
+loadVisitors();
+setInterval(loadVisitors, 10000);
+loadCharts();
+loadMap();
+</script>
+<a href="{% url 'home' %}" class="btn btn-primary mt-4">← Back to Home</a>
+</body>
+</html>

@@ -1,0 +1,273 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Watch {{ movie.name }} — Rwanda Film Vault</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --rfv-blue: #004080;
+      --rfv-blue-100: #f0f8ff;
+      --rfv-green: #28a745;
+      --rfv-text: #222;
+    }
+    body { background: var(--rfv-blue-100); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif; margin: 0; }
+    .page-layout { display: flex; gap: 28px; max-width: 1400px; margin: 20px auto; padding: 0 16px; }
+
+    /* Video section */
+    .video-section { flex: 0 0 65%; position: sticky; top: 20px; align-self: flex-start; }
+    .video-frame { background: #000; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.25); overflow: hidden; }
+    .video-frame video { display: block; width: 100%; height: 680px; object-fit: contain; background: #000; }
+
+    /* Stats card */
+    .stats-card { background: #fff; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.12); padding: 18px; margin-top: 18px; text-align: center; }
+    .stats-card h5 { margin-bottom: 14px; color: var(--rfv-blue); font-weight: 700; }
+    .movie-stats { display:flex; gap:18px; justify-content:center; flex-wrap:wrap; }
+    .movie-stats .stat { background:#f3f7fb; padding:12px 18px; border-radius:10px; border:1px solid #e6eef7; font-weight:700; font-size:16px; min-width:150px; }
+
+    /* Download button */
+    .download-btn { text-align:center; margin-top:14px; }
+    .download-btn a { display:inline-block; background:var(--rfv-green); color:#fff; border-radius:10px; padding:12px 20px; text-decoration:none; font-weight:600; }
+    .download-btn a:hover { opacity:.95; }
+
+    /* Info + Comments */
+    .info-comments { flex: 0 0 35%; background: #fff; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.12); position: sticky; top: 20px; align-self: flex-start; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; }
+    .info-header { padding: 24px; border-bottom: 1px solid #e6eef7; background: #fff; flex-shrink: 0; z-index: 1; }
+    .comments-scroll { padding: 16px 24px; overflow-y: auto; flex: 1 1 auto; }
+    .movie-title { text-align:center; color:var(--rfv-blue); font-weight:800; margin-bottom:6px; }
+    .uploaded-time { font-size:13px; color:#667085; margin-bottom:8px; }
+
+    /* Comments */
+    .comment-form { background: #f9fbfd; border: 1px solid #e6eef7; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+    .comment-form input, .comment-form textarea { border-radius:8px; }
+    .comment { background:#f7fbff; border:1px solid #e4f1ff; border-left:4px solid var(--rfv-green); padding:12px 14px; border-radius:8px; margin-bottom:12px; opacity:1; transition:opacity .28s ease, transform .25s ease; }
+    .comment.new { opacity:0; transform: translateY(-6px); }
+    .comment.show { opacity:1; transform: none; }
+    .comment strong { color:var(--rfv-blue); }
+    .comment small { color:#6b7280; font-size:12px; }
+
+    @media (max-width:992px) {
+      .page-layout { flex-direction:column; }
+      .video-section { position:static; }
+      .info-comments { position:static; max-height:none; }
+      .video-frame video { height:56.25vw; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-layout">
+  <!-- VIDEO + STATS -->
+  <div class="video-section">
+    <div class="video-frame">
+      <video id="movie-player" controls playsinline>
+        <source src="{{ movie.video_url }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <div class="stats-card">
+      <h5>📊 Movie Stats</h5>
+      <div class="movie-stats">
+        <div class="stat">👁️ Total views: <span id="total-views" data-value="{{ total_views|default:0 }}">{{ total_views|default:0 }}</span></div>
+        <div class="stat">🔴 Live: <span id="live-viewers" data-value="{{ live_viewers|default:0 }}">{{ live_viewers|default:0 }}</span></div>
+      </div>
+    </div>
+    {% if movie.download_url %}
+    <div class="download-btn">
+      <a href="{% url 'download_movie' movie.id %}" target="_blank" rel="noopener">⬇ Download Movie</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- INFO + COMMENTS -->
+  <div class="info-comments">
+    <div class="info-header">
+      <h2 class="movie-title">{{ movie.name }}</h2>
+      <div class="movie-info">
+        <p>{{ movie.description }}</p>
+        <div id="uploaded-time" class="uploaded-time" data-uploaded="{{ movie.uploaded_at|date:'c' }}">
+          Uploaded: {{ movie.uploaded_at|timesince }} ago
+        </div>
+      </div>
+      <h5>💬 Comments (<span id="comment-count">{{ comments|length }}</span>)</h5>
+      <form id="comment-form" class="comment-form" method="POST" action="{% url 'watch_movie' movie.id %}">
+        {% csrf_token %}
+        <div class="mb-2">
+          <input type="text" name="guest_name" class="form-control" placeholder="Your name (optional)">
+        </div>
+        <div class="mb-2">
+          <textarea name="text" id="comment-text" rows="3" class="form-control" placeholder="Write your comment..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+      </form>
+    </div>
+
+    <div class="comments-scroll">
+      <div id="comments-list" data-last-id="{{ last_comment_id|default:0 }}">
+        {% for comment in comments %}
+        <div class="comment" data-id="{{ comment.id }}">
+          <strong>
+            {% if comment.guest_name %}
+              {{ comment.guest_name }}
+            {% elif comment.user %}
+              {{ comment.user.username }}
+            {% else %}
+              Guest
+            {% endif %}
+          </strong>:
+          <p class="mb-1">{{ comment.text }}</p>
+          <!-- added data-created for auto-refresh -->
+          <small data-created="{{ comment.created_at|date:'c' }}">{{ comment.created_at|timesince }} ago</small>
+        </div>
+        {% empty %}
+        <p class="text-muted">No comments yet. Be the first to comment!</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script>
+/* animate numbers */
+function animateNumber(el, newVal, duration=600) {
+  const start = parseInt(el.dataset.animatedValue || el.textContent.replace(/[^\d]/g,''))||0;
+  newVal = parseInt(newVal)||0;
+  if (start===newVal){el.textContent=String(newVal);el.dataset.animatedValue=newVal;return;}
+  const startTime=performance.now();const diff=newVal-start;
+  function step(now){const t=Math.min(1,(now-startTime)/duration);const eased=1-Math.pow(1-t,3);
+    const current=Math.round(start+diff*eased);el.textContent=String(current);el.dataset.animatedValue=current;
+    if(t<1)requestAnimationFrame(step);else el.textContent=String(newVal);}
+  requestAnimationFrame(step);
+}
+
+/* live "uploaded ago" */
+(function(){
+  const el=document.getElementById('uploaded-time');if(!el)return;
+  function tick(){
+    const d=new Date(el.dataset.uploaded);const diff=Math.floor((Date.now()-d)/1000);let txt;
+    if(diff<60)txt=diff+" seconds ago";else if(diff<3600)txt=Math.floor(diff/60)+" minutes ago";
+    else if(diff<86400)txt=Math.floor(diff/3600)+" hours ago";else if(diff<604800)txt=Math.floor(diff/86400)+" days ago";
+    else if(diff<2419200)txt=Math.floor(diff/604800)+" weeks ago";else if(diff<29030400)txt=Math.floor(diff/2419200)+" months ago";
+    else txt=Math.floor(diff/29030400)+" years ago";el.textContent="Uploaded: "+txt;}
+  tick();setInterval(tick,60000);
+})();
+
+/* NEW: auto-refresh comment timestamps */
+(function(){
+  function formatAgo(diff) {
+    if(diff < 60) return diff+" seconds ago";
+    if(diff < 3600) return Math.floor(diff/60)+" minutes ago";
+    if(diff < 86400) return Math.floor(diff/3600)+" hours ago";
+    if(diff < 604800) return Math.floor(diff/86400)+" days ago";
+    if(diff < 2419200) return Math.floor(diff/604800)+" weeks ago";
+    if(diff < 29030400) return Math.floor(diff/2419200)+" months ago";
+    return Math.floor(diff/29030400)+" years ago";
+  }
+
+  function updateTimes(){
+    document.querySelectorAll('#comments-list .comment small[data-created]').forEach(el=>{
+      const d = new Date(el.dataset.created);
+      const diff = Math.floor((Date.now()-d)/1000);
+      el.textContent = formatAgo(diff);
+    });
+  }
+
+  // make available globally so renderComment can call it
+  window.updateCommentTimes = updateTimes;
+
+  updateTimes();
+  setInterval(updateTimes, 60000);
+})();
+
+/* helpers for comments */
+function renderComment(c){
+  const w = document.createElement('div');
+  w.className = 'comment new';
+  w.dataset.id = c.id;
+
+  const a = (c.guest_name && String(c.guest_name).trim()) ? c.guest_name : (c.user || 'Guest');
+  const strong = document.createElement('strong');
+  strong.textContent = a + ':';
+  w.appendChild(strong);
+
+  const p = document.createElement('p');
+  p.className = 'mb-1';
+  p.textContent = c.text || '';
+  w.appendChild(p);
+
+  const small = document.createElement('small');
+  // ensure data-created is always set
+  if (c.created_at) {
+    small.dataset.created = c.created_at; // ISO datetime from server
+  } else {
+    small.dataset.created = new Date().toISOString(); // fallback
+  }
+  small.textContent = c.created_at_display || "just now";
+  w.appendChild(small);
+
+  requestAnimationFrame(()=>{w.classList.remove('new');w.classList.add('show');});
+
+  // immediately update this timestamp
+  if (typeof window.updateCommentTimes === 'function') {
+    window.updateCommentTimes();
+  }
+
+  return w;
+}
+
+/* ajax post comment */
+(function(){
+  const form=document.getElementById('comment-form'),list=document.getElementById('comments-list'),countEl=document.getElementById('comment-count');
+  if(!form)return;
+  form.addEventListener('submit',function(e){e.preventDefault();
+    const t=document.getElementById('comment-text').value.trim();if(!t)return;
+    const fd=new FormData(form);
+    fetch(form.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd})
+    .then(r=>r.json()).then(d=>{
+      if(!d.latest_comment)return;const c=d.latest_comment;
+      const norm={id:c.id,guest_name:c.guest_name||"",user:c.user||null,text:c.text||"",created_at:c.created_at||null,created_at_display:c.created_at_display||"just now"};
+      if(!list.querySelector('[data-id="'+norm.id+'"]'))list.prepend(renderComment(norm));
+      if(norm.id && norm.id>parseInt(list.dataset.lastId||'0',10))list.dataset.lastId=String(norm.id);
+      countEl.textContent=(d.count!==undefined)?String(d.count):String(parseInt(countEl.textContent||'0',10)+1);
+      form.reset();
+    }).catch(err=>console.error('Error posting:',err));
+  });
+})();
+
+/* poll comments + stats */
+(function(){
+  const list=document.getElementById('comments-list'),countEl=document.getElementById('comment-count'),
+        totalViewsEl=document.getElementById('total-views'),liveViewersEl=document.getElementById('live-viewers');
+  if(!list)return;let lastId=parseInt(list.dataset.lastId||'0',10);
+  function poll(){
+    const url="{% url 'comments_feed' movie.id %}?since="+encodeURIComponent(lastId);
+    fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{
+      (d.comments||[]).forEach(c=>{if(!list.querySelector('[data-id="'+c.id+'"]'))list.prepend(renderComment(c));if(c.id&&c.id>lastId)lastId=c.id;});
+      list.dataset.lastId=String(lastId);
+      if(d.count!==undefined)countEl.textContent=String(d.count);
+      if(d.total_views!==undefined)animateNumber(totalViewsEl,d.total_views,700);
+      if(d.live_viewers!==undefined)animateNumber(liveViewersEl,d.live_viewers,700);
+    }).catch(()=>{});
+  }
+  setInterval(()=>{if(!document.hidden)poll();},5000);setTimeout(poll,1200);
+})();
+
+/* watch tracking */
+(function(){
+  let watchId=null;const v=document.getElementById('movie-player');
+  function start(){fetch("{% url 'start_watch' movie.id %}",{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(r=>r.json()).then(d=>{if(d.watch_id)watchId=d.watch_id;}).catch(()=>{});}
+  function stop(){if(!watchId)return;const u="{% url 'stop_watch' 0 %}".replace('0',watchId);
+    if(navigator.sendBeacon){try{navigator.sendBeacon(u);}catch(e){}}else fetch(u,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).catch(()=>{});
+    watchId=null;}
+  if(v){v.addEventListener('play',start);v.addEventListener('pause',stop);v.addEventListener('ended',stop);window.addEventListener('beforeunload',stop);}
+})();
+</script>
+</body>
+</html>

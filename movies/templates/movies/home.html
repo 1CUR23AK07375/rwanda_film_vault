@@ -1,0 +1,244 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rwanda Film Vault</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f7fbff;
+            margin: 0;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* === FIXED LAYOUT === */
+        body {
+            padding-top: 130px;   /* space for navbar + search bar */
+            padding-bottom: 80px; /* space for footer */
+        }
+        .navbar-custom {
+            background: #007bff !important;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1050;
+        }
+        .search-bar {
+            max-width: 700px;
+            margin: 0 auto;
+            position: fixed;
+            top: 56px; /* just below navbar */
+            left: 0; right: 0;
+            z-index: 1040;
+            padding: 10px;
+            background: #f7fbff;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 1050;
+            margin: 0;
+        }
+
+        /* Movies grid area */
+        .movies-container {
+            padding: 20px;
+        }
+
+        /* Movie Cards */
+        .movie-card {
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .movie-card:hover { transform: scale(1.03); }
+        .movie-card img {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            height: 220px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .card-body { padding: 15px; }
+        .links a {
+            margin-right: 10px;
+            font-size: 14px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .links a:hover { text-decoration: underline; }
+        .comments { font-size: 13px; color: #555; margin-top: 5px; }
+        .uploaded-time { font-size: 12px; color: #888; margin-top: 5px; }
+
+        /* Navbar buttons */
+        .navbar-brand { font-weight: bold; font-size: 20px; color: #fff !important; }
+        .navbar-custom .btn-outline-light { border-color: #fff; color: #fff; }
+        .navbar-custom .btn-outline-light:hover { background: #fff; color: #007bff; }
+
+        /* Search bar design */
+        .search-input {
+            border-radius: 25px 0 0 25px !important;
+            padding: 10px 15px;
+            box-shadow: none;
+        }
+        .search-btn {
+            border-radius: 0 25px 25px 0 !important;
+            padding: 10px 20px;
+        }
+        .search-wrapper {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            border-radius: 25px;
+            overflow: hidden;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 20px 0;
+            background: #007bff;
+            text-align: center;
+            font-size: 14px;
+            color: #fff;
+        }
+        .footer a { color: #fff; margin: 0 8px; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* Dark mode */
+        .dark-mode { background: #0b1220; color: #e6eef9; }
+        .dark-mode .movie-card { background: #1a243a; color: #e6eef9; }
+        .dark-mode .card-body { color: #e6eef9; }
+        .dark-mode .comments { color: #cbd5e1; }
+        .dark-mode .uploaded-time { color: #9ca3af; }
+        .dark-mode .footer { background: #111827; color: #9ca3af; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom px-3">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'home' %}">Rwanda Film Vault</a>
+    <div class="d-flex align-items-center ms-auto">
+      {% if request.user.is_authenticated and request.user.is_staff %}
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
+      {% endif %}
+      <button id="darkToggle" class="btn btn-outline-light btn-sm">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Search Bar -->
+<div class="search-bar">
+    <form method="GET" action="{% url 'home' %}">
+        <div class="input-group search-wrapper">
+            <input type="text" name="q" class="form-control search-input" placeholder="Search movies..." value="{{ request.GET.q|default:'' }}">
+            <button class="btn btn-primary search-btn" type="submit">🔍</button>
+        </div>
+    </form>
+</div>
+
+<!-- Movies Grid -->
+<div class="container movies-container">
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        {% for movie in movies %}
+            {% if movie.id %}
+            <div class="col">
+                <div class="card movie-card">
+                    {% if movie.image_url %}
+                        <img src="{{ movie.image_url }}" class="card-img-top" alt="{{ movie.name }}">
+                    {% else %}
+                        <img src="{% static 'movies/default_image.png' %}" class="card-img-top" alt="{{ movie.name }}">
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h5 class="card-title">{{ movie.name }}</h5>
+
+                        <div class="links">
+                            <a href="{% url 'watch_movie' movie.id %}">Watch</a>
+                            {% if movie.download_url %}
+                                <a href="{% url 'download_movie' movie.id %}">Download</a>
+                            {% endif %}
+                        </div>
+
+                        <div class="comments" id="comments-count-{{ movie.id }}" data-movie-id="{{ movie.id }}">
+                            {{ movie.comment_set.count }} Comments
+                        </div>
+
+                        <div class="uploaded-time" id="time-{{ movie.id }}" data-uploaded="{{ movie.uploaded_at|date:'c' }}">
+                            Uploaded: {{ movie.uploaded_at|timesince }} ago
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% empty %}
+            <p class="text-center">No movies available yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <p>© {{ now|date:"Y" }} Rwanda Film Vault. All rights reserved.</p>
+    <p>
+      <a href="#">About</a> | 
+      <a href="#">Contact</a> | 
+      <a href="#">Privacy</a>
+    </p>
+</div>
+
+<!-- Scripts -->
+<script>
+    // Dark Mode Toggle
+    const darkToggle = document.getElementById("darkToggle");
+    const root = document.body;
+    const saved = localStorage.getItem("rfv_dark");
+    if (saved === "1") root.classList.add("dark-mode");
+    darkToggle.textContent = root.classList.contains("dark-mode") ? "☀️" : "🌙";
+    darkToggle.addEventListener("click", () => {
+        root.classList.toggle("dark-mode");
+        const isDark = root.classList.contains("dark-mode");
+        localStorage.setItem("rfv_dark", isDark ? "1" : "0");
+        darkToggle.textContent = isDark ? "☀️" : "🌙";
+    });
+
+    // Update Uploaded Times
+    function updateTimes() {
+        document.querySelectorAll('[id^="time-"]').forEach(el => {
+            const uploadedAt = new Date(el.dataset.uploaded);
+            const now = new Date();
+            let diff = Math.floor((now - uploadedAt) / 1000);
+            let display = "";
+            if (diff < 60) display = diff + " seconds ago";
+            else if (diff < 3600) display = Math.floor(diff/60) + " minutes ago";
+            else if (diff < 86400) display = Math.floor(diff/3600) + " hours ago";
+            else if (diff < 604800) display = Math.floor(diff/86400) + " days ago";
+            else if (diff < 2419200) display = Math.floor(diff/604800) + " weeks ago";
+            else if (diff < 29030400) display = Math.floor(diff/2419200) + " months ago";
+            else display = Math.floor(diff/29030400) + " years ago";
+            el.textContent = "Uploaded: " + display;
+        });
+    }
+    setInterval(updateTimes, 1000);
+    updateTimes();
+
+    // Dynamic Comment Count
+    function updateCommentCounts() {
+        document.querySelectorAll('.comments[data-movie-id]').forEach(el => {
+            const movieId = el.dataset.movieId;
+            if (!movieId) return;
+            fetch(`/movies/comment_count/${movieId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    el.textContent = data.count + " Comments";
+                })
+                .catch(err => console.error("Error fetching comment count:", err));
+        });
+    }
+    setInterval(updateCommentCounts, 5000);
+    updateCommentCounts();
+</script>
+
+</body>
+</html>
