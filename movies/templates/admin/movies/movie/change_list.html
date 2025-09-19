@@ -1,0 +1,54 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+  <div style="margin:16px 0 24px; padding:18px; background:linear-gradient(180deg,#f9fbfc,#ffffff); border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 4px 14px rgba(20,40,80,0.06);">
+    <div style="display:flex; gap:18px; align-items:stretch; flex-wrap:wrap;">
+
+      <!-- Blue Card -->
+      <div style="flex:1; min-width:200px; padding:16px; background:#e0f2fe; border-radius:12px; border:1px solid #bae6fd; display:flex; align-items:center; gap:12px;">
+        <div style="background:#3b82f6; color:white; border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+          📥
+        </div>
+        <div>
+          <div style="font-size:13px; color:#1e40af;">Total Downloads</div>
+          <div style="font-size:26px; font-weight:700; color:#1e3a8a;">{{ total_downloads|default:0 }}</div>
+        </div>
+      </div>
+
+      <!-- Orange Card -->
+      {% if top_movie %}
+      <div style="flex:2; min-width:260px; padding:16px; background:#fff7ed; border-radius:12px; border:1px solid #fdba74; display:flex; align-items:center; gap:12px;">
+        <div style="background:#f97316; color:white; border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+          🔥
+        </div>
+        <div>
+          <div style="font-size:13px; color:#c2410c;">Top Downloaded Movie</div>
+          <div style="font-size:18px; font-weight:700; color:#9a3412;">{{ top_movie.name }}</div>
+          <div style="font-size:13px; color:#ea580c;">{{ top_movie.download_count }} downloads</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Green Card -->
+      <div style="flex:1; min-width:200px; padding:16px; background:#ecfdf5; border-radius:12px; border:1px solid #a7f3d0; display:flex; align-items:center; gap:12px;">
+        <div style="background:#10b981; color:white; border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+          📅
+        </div>
+        <div>
+          <div style="font-size:13px; color:#166534;">Latest Upload</div>
+          {% with latest=latest_movie %}
+            {% if latest %}
+              <div style="font-weight:700; color:#065f46;">{{ latest.name }}</div>
+              <div style="font-size:12px; color:#047857;">{{ latest.uploaded_at|date:"Y-m-d H:i" }}</div>
+            {% else %}
+              <div style="color:#166534;">—</div>
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  {{ block.super }}
+{% endblock %}
