@@ -67,29 +67,6 @@ class Movie(models.Model):
 
 
 # ===============================
-# Reaction Tracker model
-# ===============================
-class ReactionTracker(models.Model):
-    REACTION_CHOICES = [
-        ("like", "Like"),
-        ("love", "Love"),
-        ("fire", "Fire"),
-    ]
-
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="reactions")
-    ip_address = models.GenericIPAddressField()
-    reaction_type = models.CharField(max_length=20, choices=REACTION_CHOICES)
-    reacted_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("movie", "ip_address", "reaction_type")
-        ordering = ["-reacted_at"]
-
-    def __str__(self):
-        return f"{self.reaction_type} on {self.movie.name} by {self.ip_address}"
-
-
-# ===============================
 # Comment model
 # ===============================
 class Comment(models.Model):

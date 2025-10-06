@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Movie, Comment, WatchHistory, Visitor, ReactionTracker, DownloadHistory
+from .models import Movie, Comment, WatchHistory, Visitor, DownloadHistory
 from django.db.models import Sum  # ✅ add this import
 
 
@@ -26,13 +26,6 @@ class WatchHistoryAdmin(admin.ModelAdmin):
     list_filter = ('movie', 'user', 'start_time', 'end_time')
     search_fields = ('movie__name', 'user__username', 'ip_address')
     readonly_fields = ('duration', 'last_seen')
-
-
-@admin.register(ReactionTracker)
-class ReactionTrackerAdmin(admin.ModelAdmin):
-    list_display = ("movie", "reaction_type", "ip_address", "reacted_at")
-    list_filter = ("reaction_type", "reacted_at")
-    search_fields = ("movie__name", "ip_address")
 
 
 @admin.register(DownloadHistory)

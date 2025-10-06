@@ -1,0 +1,574 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Rwanda Film Vault</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for consistent social icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    :root {
+      --rfv-blue: #007bff;
+      --card-radius: 14px;
+      --card-shadow: 0 6px 20px rgba(10,20,40,0.06);
+    }
+    html, body {
+      height:100%; margin:0;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,Arial;
+    }
+    body {
+      background:#f7fbff; color:#0f1724;
+      padding-top:130px; padding-bottom:80px;
+      transition:background .25s,color .25s;
+    }
+
+    /* Navbar */
+    .navbar-custom {
+      background:linear-gradient(90deg,var(--rfv-blue),#0056b3);
+      position:fixed; top:0; left:0; right:0; z-index:1060;
+      box-shadow:0 2px 8px rgba(0,0,0,0.12)
+    }
+    .navbar-brand { font-weight:700; color:#fff!important }
+
+    /* Search bar */
+    .search-bar {
+      max-width:900px; margin:0 auto;
+      position:fixed; top:56px; left:0; right:0; z-index:1040;
+      padding:10px; background:#f7fbff;
+    }
+    .search-wrapper {
+      border-radius:28px; overflow:hidden;
+      box-shadow:0 2px 8px rgba(0,0,0,0.12);
+      display:flex; gap:8px; align-items:center; padding:6px;
+      position:relative;
+    }
+    .search-input { border:0; padding:10px 14px; font-size:15px; flex:1 }
+    .search-btn { border-radius:20px; padding:8px 18px }
+    #search-suggestions {
+      top:48px; left:0; right:0; max-height:240px; overflow-y:auto;
+      border-radius:0 0 12px 12px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    }
+    #search-suggestions li:hover { background:#f0f0f0; }
+
+    /* Container */
+    .container-main { max-width:1180px; margin:18px auto; padding:0 16px }
+
+    /* Big stats card (fixed, responsive) */
+    .stats-card {
+      border-radius:20px; text-align:center;
+      background:linear-gradient(135deg,#007bff,#00c6ff);
+      color:white; padding:20px 16px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.18);
+      width:200px; position:fixed; top:120px; right:20px; z-index:1055;
+      transition: all 0.3s ease;
+    }
+    .stats-card h1 {
+      font-size:2.2rem; font-weight:800; margin:0;
+      line-height:1;
+    }
+    .stats-card p { font-size:0.9rem; margin-top:6px; opacity:0.95; }
+
+    /* Responsive: move to top center on smaller screens */
+    @media (max-width: 768px) {
+      .stats-card {
+        top:70px;       /* below navbar */
+        right:50%;
+        transform:translateX(50%);
+        width:160px;
+        padding:16px 12px;
+      }
+      .stats-card h1 { font-size:1.8rem; }
+      .stats-card p { font-size:0.85rem; }
+    }
+
+    /* Movie cards */
+    .movie-card {
+      border-radius:var(--card-radius);
+      background:#fff;
+      box-shadow:var(--card-shadow);
+      transition:transform .18s,box-shadow .18s;
+      display:flex; flex-direction:column; overflow:hidden;
+      min-height:280px;
+    }
+    .movie-card:hover { transform:translateY(-6px); box-shadow:0 10px 28px rgba(0,0,0,0.14) }
+    .movie-thumb { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#e9f2ff }
+    .card-body { padding:14px; display:flex; flex-direction:column; gap:8px; flex:1 }
+    .card-title { font-weight:700; font-size:1rem; margin-bottom:4px }
+    .movie-desc { font-size:13px; color:#475569; min-height:34px }
+    .movie-meta { font-size:13px; color:#64748b; display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+    .movie-actions a { margin-right:12px; font-weight:600; color:var(--rfv-blue); text-decoration:none }
+
+    /* Watch button style */
+    .movie-actions a.watch-btn {
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:6px;
+      background-color:var(--rfv-blue);
+      color:#fff !important;
+      font-weight:600;
+      text-decoration:none;
+      transition:background .2s;
+    }
+    .movie-actions a.watch-btn:hover {
+      background-color:#0056b3;
+      text-decoration:none;
+    }
+
+    .uploaded-time { font-size:0.85rem; color:#6c757d }
+
+    /* Footer */
+    .site-footer {
+      position:fixed; bottom:0; left:0; right:0;
+      background:linear-gradient(90deg,var(--rfv-blue),#0056b3);
+      color:#fff; text-align:center; padding:12px 0; z-index:1050;
+    }
+    .site-footer .social-icons {
+      display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px;
+    }
+    .site-footer .social-icons a {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:8px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.06);
+      color: #fff; text-decoration: none; transition: all .15s ease;
+    }
+    .site-footer .social-icons a:hover { transform: translateY(-3px); background: rgba(255,255,255,0.14); }
+    .site-footer .social-icons i { font-size:18px; }
+
+    /* Floating contact widget (bottom-right) */
+    .contact-widget {
+      position: fixed;
+      right: 20px;
+      bottom: 100px; /* above footer */
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .cw-toggle {
+      width:56px; height:56px; border-radius:50%;
+      background:var(--rfv-blue); color:#fff; display:inline-flex;
+      align-items:center; justify-content:center; cursor:pointer;
+      box-shadow:0 6px 18px rgba(0,0,0,0.18); border:none;
+    }
+    .cw-panel {
+      background: #fff;
+      color: #0f1724;
+      border-radius:12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      padding:10px;
+      min-width:180px;
+      display:none;
+      flex-direction: column;
+      gap:8px;
+      align-items: stretch;
+    }
+    .cw-item {
+      display:flex; gap:10px; align-items:center; text-decoration:none;
+      color: inherit; padding:8px; border-radius:8px;
+      transition: background .12s;
+    }
+    .cw-item:hover { background:#f4f6fb; text-decoration:none; }
+    .cw-item .icon {
+      width:36px; height:36px; border-radius:8px; display:inline-flex;
+      align-items:center; justify-content:center; color:#fff;
+    }
+    .cw-item .label { font-weight:600; font-size:14px; }
+
+    .cw-whatsapp { background: #25D366; }
+    .cw-tiktok { background: #010101; }
+    .cw-facebook { background: #1877F2; }
+    .cw-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); color:#fff; }
+
+    @media (max-width: 576px) {
+      .contact-widget { right: 12px; bottom: 90px; }
+      .stats-card { right: 50%; transform: translateX(50%); top:70px; }
+    }
+
+    /* Dark-mode tweaks for widget/panel */
+    .dark-mode .cw-panel { background:#071025; color:#e6eef9; }
+    .dark-mode .cw-item:hover { background: rgba(255,255,255,0.02); }
+    .dark-mode .cw-item .icon { color:#fff; }
+
+    /* Helpers */
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px }
+    .see-all-btn { font-size:14px }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom px-3">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'home' %}">Rwanda Film Vault</a>
+    <div class="d-flex align-items-center ms-auto">
+      {% if request.user.is_authenticated and request.user.is_staff %}
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
+      {% endif %}
+      <button id="darkToggle" class="btn btn-outline-light btn-sm" aria-label="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<!-- SEARCH -->
+<div class="search-bar" role="search">
+  <form method="GET" action="{% url 'home' %}" class="d-flex justify-content-center" autocomplete="off">
+    <div class="input-group search-wrapper">
+      <input id="search-input" name="q" type="search" class="search-input" placeholder="Search movies..." value="{{ request.GET.q|default:'' }}">
+      <button class="search-btn" type="submit">🔍</button>
+      <ul id="search-suggestions" class="list-group position-absolute" style="z-index:1050; display:none;"></ul>
+    </div>
+  </form>
+</div>
+
+<!-- MAIN -->
+<main class="container-main">
+
+  <!-- Big total movies card -->
+  <div class="stats-card" role="region" aria-label="Total movies available">
+    <h1 id="total-movies" data-target="{{ total_movies|default:0 }}" aria-live="polite">0</h1>
+    <p>Total Movies Available</p>
+  </div>
+
+  <!-- Trending -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>🔥 Trending Movies</h4>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'home' %}?sort=trending">See all</a>
+    </div>
+    <div class="row g-4">
+      {% for movie in trending_movies %}
+        <div class="col-12 col-sm-6 col-md-6 col-lg-4">
+          <article class="movie-card">
+            {% if movie.image_url %}
+              <img src="{{ movie.image_url }}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+            {% else %}
+              <img src="{% static 'movies/default_image.png' %}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ movie.name }}</h5>
+              <div class="movie-actions">
+                <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+              </div>
+              <div class="uploaded-time mt-2"
+                   id="time-{{ movie.id }}"
+                   data-uploaded="{{ movie.uploaded_at|date:'U' }}">
+                Uploaded: {{ movie.uploaded_at|timesince }} ago
+              </div>
+            </div>
+          </article>
+        </div>
+      {% empty %}
+        <p class="text-center">No trending movies yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- New Releases -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>🆕 New Releases</h4>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'home' %}?sort=new">See all</a>
+    </div>
+    <div class="row g-4">
+      {% for movie in new_releases %}
+        <div class="col-12 col-sm-6 col-md-6 col-lg-4">
+          <article class="movie-card">
+            {% if movie.image_url %}
+              <img src="{{ movie.image_url }}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+            {% else %}
+              <img src="{% static 'movies/default_image.png' %}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ movie.name }}</h5>
+              <div class="movie-actions">
+                <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+              </div>
+              <div class="uploaded-time mt-2"
+                   id="time-{{ movie.id }}"
+                   data-uploaded="{{ movie.uploaded_at|date:'U' }}">
+                Uploaded: {{ movie.uploaded_at|timesince }} ago
+              </div>
+            </div>
+          </article>
+        </div>
+      {% empty %}
+        <p class="text-center">No new releases yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- All Movies -->
+  <section>
+    <h4 class="mb-3">🎬 All Movies</h4>
+    <div class="row g-4" id="all-movies-container">
+      {% for movie in movies %}
+        <div class="col-12 col-sm-6 col-md-6 col-lg-4" data-movie-id="{{ movie.id }}">
+          <article class="movie-card" data-genre="{{ movie.genre|default:'' }}">
+            {% if movie.image_url %}
+              <img src="{{ movie.image_url }}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+            {% else %}
+              <img src="{% static 'movies/default_image.png' %}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ movie.name }}</h5>
+              <div class="movie-meta">
+                <span class="comments" data-movie-id="{{ movie.id }}">{{ movie.comment_set.count }} Comments</span>
+                {% if movie.genre %}
+                  <span class="ms-auto">{{ movie.genre }}</span>
+                {% endif %}
+              </div>
+              <div class="movie-actions mt-2">
+                <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+                {% if movie.download_url %}
+                  <a href="{% url 'download_movie' movie.id %}">⬇ Download</a>
+                {% endif %}
+              </div>
+              <div class="uploaded-time mt-2"
+                   id="time-{{ movie.id }}"
+                   data-uploaded="{{ movie.uploaded_at|date:'U' }}">
+                Uploaded: {{ movie.uploaded_at|timesince }} ago
+              </div>
+            </div>
+          </article>
+        </div>
+      {% empty %}
+        <p class="text-center">No movies available yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div>© {{ now|date:"Y" }} Rwanda Film Vault — discover and share great movies</div>
+
+  <!-- Footer social icons (kept alongside the floating widget) -->
+  <div class="social-icons" aria-label="Social links">
+    <a href="https://wa.me/250000000000" target="_blank" rel="noopener noreferrer" title="WhatsApp">
+      <i class="fab fa-whatsapp" aria-hidden="true"></i><span class="visually-hidden">WhatsApp</span>
+    </a>
+    <a href="https://www.tiktok.com/@yourprofile" target="_blank" rel="noopener noreferrer" title="TikTok">
+      <i class="fab fa-tiktok" aria-hidden="true"></i><span class="visually-hidden">TikTok</span>
+    </a>
+    <a href="https://www.facebook.com/yourprofile" target="_blank" rel="noopener noreferrer" title="Facebook">
+      <i class="fab fa-facebook-f" aria-hidden="true"></i><span class="visually-hidden">Facebook</span>
+    </a>
+    <a href="https://www.instagram.com/yourprofile" target="_blank" rel="noopener noreferrer" title="Instagram">
+      <i class="fab fa-instagram" aria-hidden="true"></i><span class="visually-hidden">Instagram</span>
+    </a>
+  </div>
+</footer>
+
+<!-- Floating contact widget -->
+<div class="contact-widget" aria-hidden="false">
+  <div class="cw-panel" id="cw-panel" aria-hidden="true" role="dialog" aria-label="Contact options">
+    <!-- Replace links with your real profiles -->
+    <a class="cw-item" href="https://wa.me/250000000000" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+      <div class="icon cw-whatsapp"><i class="fab fa-whatsapp" aria-hidden="true"></i></div>
+      <div class="label">WhatsApp</div>
+    </a>
+    <a class="cw-item" href="https://www.tiktok.com/@yourprofile" target="_blank" rel="noopener noreferrer" title="Visit TikTok profile">
+      <div class="icon cw-tiktok"><i class="fab fa-tiktok" aria-hidden="true"></i></div>
+      <div class="label">TikTok</div>
+    </a>
+    <a class="cw-item" href="https://www.facebook.com/yourprofile" target="_blank" rel="noopener noreferrer" title="Visit Facebook page">
+      <div class="icon cw-facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></div>
+      <div class="label">Facebook</div>
+    </a>
+    <a class="cw-item" href="https://www.instagram.com/yourprofile" target="_blank" rel="noopener noreferrer" title="Visit Instagram">
+      <div class="icon cw-instagram"><i class="fab fa-instagram" aria-hidden="true"></i></div>
+      <div class="label">Instagram</div>
+    </a>
+  </div>
+
+  <button class="cw-toggle" id="cw-toggle" aria-expanded="false" aria-controls="cw-panel" title="Contact us">
+    <i class="fas fa-comment-dots" style="font-size:20px"></i>
+  </button>
+</div>
+
+<!-- Scripts -->
+<script>
+  function fmt(n){ try{ return new Intl.NumberFormat().format(Math.round(n)); }catch(e){ return String(Math.round(n)); } }
+  function animateCount(el, to, duration=1200){
+    const from = parseInt(el.dataset.animatedFrom || 0, 10) || 0;
+    const startTime = performance.now();
+    function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+    function step(now){
+      const t = Math.min(1, (now - startTime) / duration);
+      const val = Math.round(from + (to - from) * easeOutCubic(t));
+      el.textContent = fmt(val);
+      el.dataset.animatedFrom = val;
+      if(t < 1) requestAnimationFrame(step);
+      else el.dataset.animatedFrom = to;
+    }
+    requestAnimationFrame(step);
+  }
+  (function(){
+    const el = document.getElementById('total-movies');
+    if(!el) return;
+    const target = parseInt(el.getAttribute('data-target') || '0', 10) || 0;
+    setTimeout(()=> animateCount(el, target, 1300), 150);
+  })();
+
+  function updateTimes(){
+    document.querySelectorAll('[id^="time-"]').forEach(el=>{
+      const ts = parseInt(el.dataset.uploaded, 10);
+      if(isNaN(ts)) return;
+      const diff = Math.floor((Date.now() - ts*1000)/1000);
+      let display = "";
+      if(diff<60) display = diff + " seconds ago";
+      else if(diff<3600) display = Math.floor(diff/60) + " minutes ago";
+      else if(diff<86400) display = Math.floor(diff/3600) + " hours ago";
+      else if(diff<604800) display = Math.floor(diff/86400) + " days ago";
+      else if(diff<2419200) display = Math.floor(diff/604800) + " weeks ago";
+      else if(diff<29030400) display = Math.floor(diff/2419200) + " months ago";
+      else display = Math.floor(diff/29030400) + " years ago";
+      el.textContent = "Uploaded: " + display;
+    });
+  }
+  updateTimes();
+  setInterval(updateTimes, 10000);
+
+  function updateCommentCounts(){
+    document.querySelectorAll('.comments[data-movie-id]').forEach(el=>{
+      const id = el.dataset.movieId;
+      if(!id) return;
+      fetch(`/movies/comment_count/${id}/`)
+        .then(r => r.json())
+        .then(d => { if(d && typeof d.count==='number') el.textContent = d.count+" Comments"; })
+        .catch(()=>{});
+    });
+  }
+  setInterval(updateCommentCounts, 5000);
+  updateCommentCounts();
+
+   // Dark mode toggle (fixed)
+  // =========================
+  (function(){
+    const btn = document.getElementById('darkToggle');
+    if(!btn) return;
+
+    // Apply saved mode on page load
+    if(localStorage.getItem('rfv_dark') === '1'){
+      document.body.classList.add('dark-mode');
+    }
+
+    // Set initial button icon
+    btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+
+    // Toggle on click
+    btn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const dark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('rfv_dark', dark ? '1' : '0');
+      btn.textContent = dark ? '☀️' : '🌙';
+    });
+  })();
+
+  // Live search suggestions
+  const searchInput = document.getElementById('search-input');
+  const suggestions = document.getElementById('search-suggestions');
+
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    if(query.length < 1) { suggestions.style.display = 'none'; return; }
+
+    fetch(`/movies/search_suggestions/?q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(data => {
+        suggestions.innerHTML = '';
+        if(data.length > 0) {
+          data.forEach(movie => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item list-group-item-action';
+            li.textContent = movie.name;
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', () => {
+              window.location.href = `/movies/watch/${movie.id}/`;
+            });
+            suggestions.appendChild(li);
+          });
+          suggestions.style.display = 'block';
+        } else {
+          suggestions.style.display = 'none';
+        }
+      });
+  });
+
+  document.addEventListener('click', (e) => {
+    if(!searchInput.contains(e.target) && !suggestions.contains(e.target)){
+      suggestions.style.display = 'none';
+    }
+  });
+
+  // ==============================
+  // Auto-refresh new movies (All Movies section)
+  // ==============================
+  function fetchNewMovies(){
+    fetch('/movies/latest/')
+      .then(res=>res.json())
+      .then(data=>{
+        if(!Array.isArray(data)) return;
+        const container = document.getElementById('all-movies-container');
+        const existingIds = Array.from(container.querySelectorAll('[data-movie-id]')).map(el=>el.dataset.movieId);
+        data.forEach(movie=>{
+          if(existingIds.includes(movie.id.toString())) return;
+          const col = document.createElement('div');
+          col.className = 'col-12 col-sm-6 col-md-6 col-lg-4';
+          col.dataset.movieId = movie.id;
+          col.innerHTML = `
+            <article class="movie-card" data-genre="${movie.genre || ''}">
+              <img src="${movie.image_url || '/static/movies/default_image.png'}" alt="${movie.name}" class="movie-thumb" loading="lazy">
+              <div class="card-body">
+                <h5 class="card-title">${movie.name}</h5>
+                <div class="movie-meta">
+                  <span class="comments" data-movie-id="${movie.id}">0 Comments</span>
+                  ${movie.genre ? `<span class="ms-auto">${movie.genre}</span>` : ''}
+                </div>
+                <div class="movie-actions mt-2">
+                  <a href="/movies/watch/${movie.id}/" class="watch-btn">▶ Watch</a>
+                  ${movie.download_url ? `<a href="/movies/download/${movie.id}/">⬇ Download</a>` : ''}
+                </div>
+                <div class="uploaded-time mt-2" id="time-${movie.id}" data-uploaded="${Math.floor(new Date(movie.uploaded_at).getTime()/1000)}">
+                  Uploaded: just now
+                </div>
+              </div>
+            </article>
+          `;
+          container.prepend(col);
+        });
+      })
+      .catch(err=>console.error(err));
+  }
+  setInterval(fetchNewMovies, 10000);
+  fetchNewMovies();
+
+  // Contact widget toggle
+  (function(){
+    const toggle = document.getElementById('cw-toggle');
+    const panel = document.getElementById('cw-panel');
+    if(!toggle || !panel) return;
+    toggle.addEventListener('click', ()=>{
+      const isOpen = panel.style.display === 'flex';
+      panel.style.display = isOpen ? 'none' : 'flex';
+      panel.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+      toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    });
+
+    // close widget when clicking outside (mobile friendly)
+    document.addEventListener('click', (e)=>{
+      if(!panel.contains(e.target) && !toggle.contains(e.target)){
+        panel.style.display = 'none';
+        panel.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  })();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Rwanda Film Vault</title>
+  <title>DUSA FILMS</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Font Awesome for consistent social icons -->
@@ -34,25 +34,65 @@
     }
     .navbar-brand { font-weight:700; color:#fff!important }
 
-    /* Search bar */
-    .search-bar {
-      max-width:900px; margin:0 auto;
-      position:fixed; top:56px; left:0; right:0; z-index:1040;
-      padding:10px; background:#f7fbff;
-    }
-    .search-wrapper {
-      border-radius:28px; overflow:hidden;
-      box-shadow:0 2px 8px rgba(0,0,0,0.12);
-      display:flex; gap:8px; align-items:center; padding:6px;
-      position:relative;
-    }
-    .search-input { border:0; padding:10px 14px; font-size:15px; flex:1 }
-    .search-btn { border-radius:20px; padding:8px 18px }
-    #search-suggestions {
-      top:48px; left:0; right:0; max-height:240px; overflow-y:auto;
-      border-radius:0 0 12px 12px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.15);
-    }
-    #search-suggestions li:hover { background:#f0f0f0; }
+   /* SEARCH BAR */
+.search-bar {
+    max-width: 640px;          /* smaller width like YouTube */
+    margin: 0 auto;
+    position: fixed;
+    top: 90px;                  /* below navbar */
+    left: 0;
+    right: 0;
+    z-index: 1040;
+    padding: 0;                 /* remove extra padding */
+    display: flex;
+    justify-content: center;
+}
+
+.search-wrapper {
+    width: 100%;
+    display: flex;
+    border-radius: 24px;        /* rounded edges */
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.search-input {
+    border: 0;
+    padding: 10px 16px;
+    font-size: 15px;
+    flex: 1;
+    outline: none;
+}
+
+.search-btn {
+    border: 0;
+    padding: 0 16px;
+    background: #f8f8f8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.search-btn:hover {
+    background: #e6e6e6;
+}
+
+#search-suggestions {
+    top: 42px;
+    left: 0;
+    right: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    border-radius: 0 0 12px 12px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1050;
+}
+#search-suggestions li:hover {
+    background: #f0f0f0;
+}
 
     /* Container */
     .container-main { max-width:1180px; margin:18px auto; padding:0 16px }
@@ -197,19 +237,71 @@
     /* Helpers */
     .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px }
     .see-all-btn { font-size:14px }
+
+    /* No-results helper */
+    #no-movies-result { display:none; padding:28px 0; color:#334155; }
+    /* Welcome message styling */
+.welcome-message {
+    margin-top: 20px;           /* space below navbar */
+    margin-bottom: 30px;        /* space above search bar */
+}
+
+.welcome-message p {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #082657;            /* dark text */
+}
+
   </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom px-3">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{% url 'home' %}">Rwanda Film Vault</a>
+    
+    <!-- Logo + Brand -->
+    <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+      <img src="{% static 'movies/samu.jpeg' %}" 
+           alt="DUSA FILMS" 
+           style="height:60px; width:auto; margin-right:12px;">
+      DUSA FILMS
+    </a>
+
+    <!-- Right side buttons -->
     <div class="d-flex align-items-center ms-auto">
       {% if request.user.is_authenticated and request.user.is_staff %}
         <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
       {% endif %}
-      <button id="darkToggle" class="btn btn-outline-light btn-sm" aria-label="Toggle dark mode">🌙</button>
+      
+    </div>
+
+  </div>
+</nav>
+
+<!-- WELCOME MESSAGE -->
+<div class="welcome-message text-center">
+    <h1>Welcome To DUSA FILMS</h1>
+    <p>The Ocean Of Movies</p>
+</div>
+<div class="search-bar" role="search">
+  <form method="GET" action="{% url 'home' %}" autocomplete="off">
+    <div class="search-wrapper">
+      <input id="search-input" name="q" type="search" class="search-input" placeholder="Search movies..." value="{{ request.GET.q|default:'' }}">
+      <button class="search-btn" type="submit">
+        🔍
+      </button>
+      <ul id="search-suggestions" class="list-group position-absolute" style="display:none;"></ul>
+    </div>
+  </form>
+</div>
+
+
+    <div class="d-flex align-items-center ms-auto">
+      {% if request.user.is_authenticated and request.user.is_staff %}
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
+      {% endif %}
+      
     </div>
   </div>
 </nav>
@@ -302,9 +394,19 @@
     </div>
   </section>
 
-  <!-- All Movies -->
+  <!-- All Movies (with Genre Filter) -->
   <section>
-    <h4 class="mb-3">🎬 All Movies</h4>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>🎬 All Movies</h4>
+      <!-- Genre Filter -->
+      <select id="genre-filter" class="form-select w-auto">
+        <option value="">All Genres</option>
+        {% for genre in genres %}
+          <option value="{{ genre.name }}">{{ genre.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
     <div class="row g-4" id="all-movies-container">
       {% for movie in movies %}
         <div class="col-12 col-sm-6 col-md-6 col-lg-4" data-movie-id="{{ movie.id }}">
@@ -340,12 +442,16 @@
         <p class="text-center">No movies available yet.</p>
       {% endfor %}
     </div>
+
+    <div id="no-movies-result" class="text-center">
+      <p class="mb-0">No movies match the selected genre.</p>
+    </div>
   </section>
 </main>
 
 <!-- FOOTER -->
 <footer class="site-footer">
-  <div>© {{ now|date:"Y" }} Rwanda Film Vault — discover and share great movies</div>
+  <div>© {{ now|date:"Y" }} DUSA FILMS — discover and share great movies</div>
 
   <!-- Footer social icons (kept alongside the floating widget) -->
   <div class="social-icons" aria-label="Social links">
@@ -447,29 +553,6 @@
   setInterval(updateCommentCounts, 5000);
   updateCommentCounts();
 
-   // Dark mode toggle (fixed)
-  // =========================
-  (function(){
-    const btn = document.getElementById('darkToggle');
-    if(!btn) return;
-
-    // Apply saved mode on page load
-    if(localStorage.getItem('rfv_dark') === '1'){
-      document.body.classList.add('dark-mode');
-    }
-
-    // Set initial button icon
-    btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-
-    // Toggle on click
-    btn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      const dark = document.body.classList.contains('dark-mode');
-      localStorage.setItem('rfv_dark', dark ? '1' : '0');
-      btn.textContent = dark ? '☀️' : '🌙';
-    });
-  })();
-
   // Live search suggestions
   const searchInput = document.getElementById('search-input');
   const suggestions = document.getElementById('search-suggestions');
@@ -507,6 +590,60 @@
   });
 
   // ==============================
+  // Genre Filter logic
+  // ==============================
+  (function(){
+    const genreFilter = document.getElementById('genre-filter');
+    const container = document.getElementById('all-movies-container');
+    const noResultEl = document.getElementById('no-movies-result');
+    if(!genreFilter || !container) return;
+
+    function normalize(str){
+      return String(str || '').trim().toLowerCase();
+    }
+
+    function applyGenreFilter(){
+      const selected = normalize(genreFilter.value);
+      const cols = Array.from(container.querySelectorAll('[data-movie-id]'));
+      let visible = 0;
+      cols.forEach(col => {
+        const article = col.querySelector('.movie-card');
+        const genreAttr = article ? (article.dataset.genre || '') : '';
+        // allow multiple genres stored in data-genre separated by comma/semicolon/pipe
+        const genreParts = genreAttr.split(/[,;|]+/).map(s => normalize(s)).filter(Boolean);
+        if(!selected){
+          col.style.display = ''; visible++;
+        } else {
+          // match if any genre part equals selected
+          const matched = genreParts.some(g => g === selected);
+          if(matched){
+            col.style.display = '';
+            visible++;
+          } else {
+            col.style.display = 'none';
+          }
+        }
+      });
+
+      // Toggle no-results message
+      if(visible === 0){
+        noResultEl.style.display = 'block';
+      } else {
+        noResultEl.style.display = 'none';
+      }
+    }
+
+    // wire change event
+    genreFilter.addEventListener('change', applyGenreFilter);
+
+    // try to apply initial filter (e.g. if preselected via querystring / server)
+    applyGenreFilter();
+
+    // expose globally so other dynamic code can call it (fetchNewMovies)
+    window.applyGenreFilter = applyGenreFilter;
+  })();
+
+  // ==============================
   // Auto-refresh new movies (All Movies section)
   // ==============================
   function fetchNewMovies(){
@@ -515,6 +652,7 @@
       .then(data=>{
         if(!Array.isArray(data)) return;
         const container = document.getElementById('all-movies-container');
+        if(!container) return;
         const existingIds = Array.from(container.querySelectorAll('[data-movie-id]')).map(el=>el.dataset.movieId);
         data.forEach(movie=>{
           if(existingIds.includes(movie.id.toString())) return;
@@ -542,6 +680,12 @@
           `;
           container.prepend(col);
         });
+
+        // Re-run comment counts for new items
+        updateCommentCounts();
+
+        // Re-apply genre filter so newly added movies respect the current selection
+        if(typeof window.applyGenreFilter === 'function') window.applyGenreFilter();
       })
       .catch(err=>console.error(err));
   }

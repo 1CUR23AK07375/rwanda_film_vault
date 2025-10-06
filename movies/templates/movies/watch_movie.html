@@ -10,264 +10,654 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    :root {
-      --rfv-blue: #004080;
-      --rfv-blue-100: #f0f8ff;
+    :root{
       --rfv-green: #28a745;
-      --rfv-text: #222;
+      --rfv-bg-dark: #0b0b0b;
+      --rfv-card-dark: #141414;
+      --rfv-text-light: #f7f7f7;
+      --rfv-text-muted: #a8a8a8;
     }
-    body { background: var(--rfv-blue-100); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif; margin: 0; }
-    .page-layout { display: flex; gap: 28px; max-width: 1400px; margin: 20px auto; padding: 0 16px; }
 
-    /* Video section */
-    .video-section { flex: 0 0 65%; position: sticky; top: 20px; align-self: flex-start; }
-    .video-frame { background: #000; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.25); overflow: hidden; }
-    .video-frame video { display: block; width: 100%; height: 680px; object-fit: contain; background: #000; }
-
-    /* Stats card */
-    .stats-card { background: #fff; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.12); padding: 18px; margin-top: 18px; text-align: center; }
-    .stats-card h5 { margin-bottom: 14px; color: var(--rfv-blue); font-weight: 700; }
-    .movie-stats { display:flex; gap:18px; justify-content:center; flex-wrap:wrap; }
-    .movie-stats .stat { background:#f3f7fb; padding:12px 18px; border-radius:10px; border:1px solid #e6eef7; font-weight:700; font-size:16px; min-width:150px; }
-
-    /* Download button */
-    .download-btn { text-align:center; margin-top:14px; }
-    .download-btn a { display:inline-block; background:var(--rfv-green); color:#fff; border-radius:10px; padding:12px 20px; text-decoration:none; font-weight:600; }
-    .download-btn a:hover { opacity:.95; }
-
-    /* Info + Comments */
-    .info-comments { flex: 0 0 35%; background: #fff; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.12); position: sticky; top: 20px; align-self: flex-start; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; }
-    .info-header { padding: 24px; border-bottom: 1px solid #e6eef7; background: #fff; flex-shrink: 0; z-index: 1; }
-    .comments-scroll { padding: 16px 24px; overflow-y: auto; flex: 1 1 auto; }
-    .movie-title { text-align:center; color:var(--rfv-blue); font-weight:800; margin-bottom:6px; }
-    .uploaded-time { font-size:13px; color:#667085; margin-bottom:8px; }
-
-    /* Comments */
-    .comment-form { background: #f9fbfd; border: 1px solid #e6eef7; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
-    .comment-form input, .comment-form textarea { border-radius:8px; }
-    .comment { background:#f7fbff; border:1px solid #e4f1ff; border-left:4px solid var(--rfv-green); padding:12px 14px; border-radius:8px; margin-bottom:12px; opacity:1; transition:opacity .28s ease, transform .25s ease; }
-    .comment.new { opacity:0; transform: translateY(-6px); }
-    .comment.show { opacity:1; transform: none; }
-    .comment strong { color:var(--rfv-blue); }
-    .comment small { color:#6b7280; font-size:12px; }
-
-    @media (max-width:992px) {
-      .page-layout { flex-direction:column; }
-      .video-section { position:static; }
-      .info-comments { position:static; max-height:none; }
-      .video-frame video { height:56.25vw; }
+    /* --- Page --- */
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #080808 0%, #0b0b0b 100%);
+      color: var(--rfv-text-light);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
+
+    .container-page{
+      max-width: 1300px;
+      margin: 18px auto;
+      padding: 0 16px;
+    }
+
+    .page-layout{
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 1000px){
+      .page-layout{ grid-template-columns: 1fr; }
+    }
+
+    /* --- Video frame / responsive like YouTube --- */
+    .video-frame{
+      width: 100%;
+      position: relative;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      /* 16:9 aspect ratio */
+      padding-top: 56.25%;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .video-frame.fullscreen-like {
+      padding-top: 0; /* when in fullscreen container this helps */
+    }
+
+    .video-frame video{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* keep letterbox, like YouTube */
+      background: #000;
+    }
+
+    /* --- Controls --- */
+    .custom-controls{
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.18) 60%, rgba(0,0,0,0) 100%);
+      transform: translateY(6px);
+      opacity: 0;
+      transition: opacity .22s ease, transform .22s ease;
+      pointer-events: none; /* enabled when visible */
+    }
+    .video-frame:hover .custom-controls,
+    .video-frame:focus-within .custom-controls,
+    .custom-controls.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .control-btn{
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      padding:6px;
+      border-radius:6px;
+    }
+    .control-btn:focus{ outline: 2px solid rgba(255,255,255,0.12); }
+
+    .progress-container{
+      position: relative;
+      flex: 1;
+      height: 8px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.12);
+      cursor: pointer;
+      min-width: 120px;
+    }
+    .buffer-bar{
+      position:absolute;
+      left:0; top:0; bottom:0;
+      width:0%;
+      background: rgba(255,255,255,0.18);
+      border-radius: 6px;
+    }
+    .progress-bar{
+      position:absolute;
+      left:0; top:0; bottom:0;
+      width:0%;
+      background: var(--rfv-green);
+      border-radius: 6px;
+    }
+    .time-display{
+      position:absolute;
+      right:8px;
+      bottom: 14px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+      user-select: none;
+    }
+
+    .volume-slider { width:90px; }
+    .speed-select { background:#111; color:#fff; border-radius:6px; padding:4px 8px; border:1px solid #222; }
+
+    /* spinner */
+    .spinner{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%);
+      width:38px; height:38px;
+      border-radius:50%;
+      border:4px solid rgba(255,255,255,0.12);
+      border-top:4px solid rgba(255,255,255,0.9);
+      animation: spin 1s linear infinite;
+      z-index: 6;
+      display:none;
+    }
+    @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+    /* --- Right column / info & comments --- */
+    .info-comments {
+      background: var(--rfv-card-dark);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      color: var(--rfv-text-light);
+      max-height: calc(100vh - 40px);
+      overflow: hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .movie-title{ text-align:center; color:var(--rfv-green); font-weight:800; margin-bottom:6px; font-size:20px; }
+    .uploaded-time{ color:var(--rfv-text-muted); font-size:13px; margin-bottom:8px; text-align:center; }
+
+    .comment-form{ margin-top:10px; background:#0f0f0f; border: 1px solid #222; padding:12px; border-radius:8px; }
+    .comment-form input, .comment-form textarea { background:#0b0b0b; border:1px solid #222; color:#fff; border-radius:6px; }
+    .comments-scroll { margin-top:14px; overflow-y:auto; padding-right:6px; }
+
+    .comment { background:#0e0e0e; border-left:4px solid var(--rfv-green); padding:10px 12px; border-radius:6px; margin-bottom:10px; color:#ddd; }
+    .comment small { color:var(--rfv-text-muted); }
+
+    /* stats card under player */
+    .stats-card{ margin-top:12px; background:var(--rfv-card-dark); border:1px solid #222; padding:12px; border-radius:10px; color:#fff; text-align:center; }
+    .movie-stats { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
+    .movie-stats .stat { background:#0b0b0b; padding:8px 12px; border-radius:8px; border:1px solid #222; min-width:110px; font-weight:700; }
+
+    .download-btn{ text-align:center; margin-top:10px; }
+    .download-btn a { display:inline-block; padding:8px 14px; background:var(--rfv-green); color:#000; font-weight:700; border-radius:8px; text-decoration:none; }
+
+    /* small screens */
+    @media (max-width:600px){
+      .time-display { display:none; } /* hide to save space */
+      .volume-slider { display:none; }
+    }
+    .back-home {
+  text-align: center;
+  margin: 30px 0 20px 0;
+}
+
+.back-home a {
+  display: inline-block;
+  background: var(--rfv-blue);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 22px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.back-home a:hover {
+  background: #0059b3;
+  transform: translateY(-2px);
+}
+
   </style>
 </head>
 <body>
+  <div class="container-page">
+    <div class="page-layout">
 
-<div class="page-layout">
-  <!-- VIDEO + STATS -->
-  <div class="video-section">
-    <div class="video-frame">
-      <video id="movie-player" controls playsinline>
-        <source src="{{ movie.video_url }}" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-    <div class="stats-card">
-      <h5>📊 Movie Stats</h5>
-      <div class="movie-stats">
-        <div class="stat">👁️ Total views: <span id="total-views" data-value="{{ total_views|default:0 }}">{{ total_views|default:0 }}</span></div>
-        <div class="stat">🔴 Live: <span id="live-viewers" data-value="{{ live_viewers|default:0 }}">{{ live_viewers|default:0 }}</span></div>
-      </div>
-    </div>
-    {% if movie.download_url %}
-    <div class="download-btn">
-      <a href="{% url 'download_movie' movie.id %}" target="_blank" rel="noopener">⬇ Download Movie</a>
-    </div>
-    {% endif %}
-  </div>
+      <!-- VIDEO + CONTROLS -->
+      <div>
+        <div class="video-frame" id="video-frame" tabindex="0" aria-label="Video player">
+          <div class="spinner" id="spinner" aria-hidden="true"></div>
 
-  <!-- INFO + COMMENTS -->
-  <div class="info-comments">
-    <div class="info-header">
-      <h2 class="movie-title">{{ movie.name }}</h2>
-      <div class="movie-info">
-        <p>{{ movie.description }}</p>
-        <div id="uploaded-time" class="uploaded-time" data-uploaded="{{ movie.uploaded_at|date:'c' }}">
-          Uploaded: {{ movie.uploaded_at|timesince }} ago
-        </div>
-      </div>
-      <h5>💬 Comments (<span id="comment-count">{{ comments|length }}</span>)</h5>
-      <form id="comment-form" class="comment-form" method="POST" action="{% url 'watch_movie' movie.id %}">
-        {% csrf_token %}
-        <div class="mb-2">
-          <input type="text" name="guest_name" class="form-control" placeholder="Your name (optional)">
-        </div>
-        <div class="mb-2">
-          <textarea name="text" id="comment-text" rows="3" class="form-control" placeholder="Write your comment..." required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
-      </form>
-    </div>
+          <video id="movie-player" playsinline preload="metadata" aria-label="Movie player">
+            <source src="{{ movie.video_url }}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
 
-    <div class="comments-scroll">
-      <div id="comments-list" data-last-id="{{ last_comment_id|default:0 }}">
-        {% for comment in comments %}
-        <div class="comment" data-id="{{ comment.id }}">
-          <strong>
-            {% if comment.guest_name %}
-              {{ comment.guest_name }}
-            {% elif comment.user %}
-              {{ comment.user.username }}
-            {% else %}
-              Guest
-            {% endif %}
-          </strong>:
-          <p class="mb-1">{{ comment.text }}</p>
-          <!-- added data-created for auto-refresh -->
-          <small data-created="{{ comment.created_at|date:'c' }}">{{ comment.created_at|timesince }} ago</small>
+          <div class="custom-controls" id="custom-controls" role="group" aria-label="Player controls">
+            <button id="play-pause" class="control-btn" aria-label="Play / Pause">▶️</button>
+
+            <div class="progress-container" id="progress-container" role="slider" aria-label="Seek bar" aria-valuemin="0" aria-valuemax="100" tabindex="0">
+              <div class="buffer-bar" id="buffer-bar"></div>
+              <div class="progress-bar" id="progress-bar"></div>
+              <div class="time-display" id="time-display">0:00 / 0:00</div>
+            </div>
+
+            <input id="volume-slider" class="volume-slider" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+            <select id="speed-select" class="speed-select" aria-label="Playback speed">
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+
+            <button id="pip-btn" class="control-btn" aria-label="Picture in Picture">📌</button>
+            <button id="fullscreen-btn" class="control-btn" aria-label="Toggle fullscreen">⛶</button>
+          </div>
         </div>
-        {% empty %}
-        <p class="text-muted">No comments yet. Be the first to comment!</p>
-        {% endfor %}
+
+        <!-- small stats row -->
+        <div class="stats-card" aria-hidden="false">
+          <div style="font-weight:700;color:var(--rfv-green)">📊 Movie stats</div>
+          <div class="movie-stats">
+            <div class="stat">👁️ Total views: <span id="total-views" data-value="{{ total_views|default:0 }}">{{ total_views|default:0 }}</span></div>
+            <div class="stat">🔴 Live: <span id="live-viewers" data-value="{{ live_viewers|default:0 }}">{{ live_viewers|default:0 }}</span></div>
+          </div>
+        </div>
+
+        {% if movie.download_url %}
+        <div class="download-btn">
+          <a href="{% url 'download_movie' movie.id %}" target="_blank" rel="noopener">⬇ Download movie</a>
+        </div>
+        {% endif %}
       </div>
-    </div>
-  </div>
+
+      <!-- INFO + COMMENTS -->
+      <aside class="info-comments" role="complementary" aria-label="Movie info and comments">
+        <div>
+          <h2 class="movie-title">{{ movie.name }}</h2>
+          <div class="movie-info">
+            <p style="color:var(--rfv-text-muted);margin-bottom:12px;">{{ movie.description }}</p>
+            <div id="uploaded-time" class="uploaded-time" data-uploaded="{{ movie.uploaded_at|date:'c' }}">
+              Uploaded: {{ movie.uploaded_at|timesince }} ago
+            </div>
+          </div>
+
+          <h5 style="margin-top:12px;">💬 Comments (<span id="comment-count">{{ comments|length }}</span>)</h5>
+
+          <form id="comment-form" class="comment-form" method="POST" action="{% url 'watch_movie' movie.id %}" novalidate>
+            {% csrf_token %}
+            <div class="mb-2">
+              <input type="text" name="guest_name" class="form-control" placeholder="Your name (optional)" aria-label="Your name">
+            </div>
+            <div class="mb-2">
+              <textarea name="text" id="comment-text" rows="3" class="form-control" placeholder="Write your comment..." required aria-label="Comment text"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success btn-sm">Post comment</button>
+          </form>
+        </div>
+
+        <div class="comments-scroll" id="comments-scroll" aria-live="polite">
+          <div id="comments-list" data-last-id="{{ last_comment_id|default:0 }}">
+            {% for comment in comments %}
+              <div class="comment" data-id="{{ comment.id }}">
+                <strong>
+                  {% if comment.guest_name %}{{ comment.guest_name }}{% elif comment.user %}{{ comment.user.username }}{% else %}Guest{% endif %}
+                </strong>:
+                <p style="margin:6px 0 8px 0;">{{ comment.text }}</p>
+                <small data-created="{{ comment.created_at|date:'c' }}">{{ comment.created_at|timesince }} ago</small>
+              </div>
+            {% empty %}
+              <p class="text-muted">No comments yet. Be the first to comment!</p>
+            {% endfor %}
+          </div>
+        </div>
+      </aside>
+
+    </div> <!-- page-layout -->
+  </div> <!-- container-page -->
+
+  <!-- =========================
+       All JS (kept in one block)
+       ========================= -->
+  <script>
+  (function(){
+    // Elements
+    const video = document.getElementById('movie-player');
+    const playBtn = document.getElementById('play-pause');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const bufferBar = document.getElementById('buffer-bar');
+    const volumeSlider = document.getElementById('volume-slider');
+    const speedSelect = document.getElementById('speed-select');
+    const pipBtn = document.getElementById('pip-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const spinner = document.getElementById('spinner');
+    const timeDisplay = document.getElementById('time-display');
+    const customControls = document.getElementById('custom-controls');
+    const videoFrame = document.getElementById('video-frame');
+
+    // Helpers
+    function fmtSeconds(sec){
+      sec = isFinite(sec) ? Math.floor(sec) : 0;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    function showSpinner(on){
+      spinner.style.display = on ? 'block' : 'none';
+    }
+
+    // Play / Pause
+    playBtn.addEventListener('click', () => {
+      if(video.paused) video.play(); else video.pause();
+    });
+    video.addEventListener('play', ()=>{ playBtn.textContent = '⏸'; });
+    video.addEventListener('pause', ()=>{ playBtn.textContent = '▶️'; });
+    video.addEventListener('ended', ()=>{ playBtn.textContent = '▶️'; });
+
+    // Update progress + time display
+    function updateBuffer(){
+      try{
+        if(video.buffered && video.buffered.length && video.duration){
+          const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+          bufferBar.style.width = Math.min(100, (bufferedEnd / video.duration) * 100) + '%';
+        }
+      }catch(e){}
+    }
+
+    function updateProgressAndTime(){
+      if(!video.duration || !isFinite(video.duration)) {
+        timeDisplay.textContent = '0:00 / 0:00';
+        progressBar.style.width = '0%';
+        bufferBar.style.width = '0%';
+        return;
+      }
+      const pct = (video.currentTime / video.duration) * 100;
+      progressBar.style.width = pct + '%';
+      // time display mm:ss / mm:ss
+      timeDisplay.textContent = fmtSeconds(video.currentTime) + ' / ' + fmtSeconds(video.duration);
+    }
+
+    video.addEventListener('timeupdate', updateProgressAndTime);
+    video.addEventListener('progress', updateBuffer);
+    video.addEventListener('loadedmetadata', ()=>{ updateBuffer(); updateProgressAndTime(); });
+    video.addEventListener('waiting', ()=> showSpinner(true));
+    video.addEventListener('playing', ()=> showSpinner(false));
+
+    // Seek on click
+    progressContainer.addEventListener('click', (e)=>{
+      if(!video.duration) return;
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      video.currentTime = Math.max(0, Math.min(video.duration, pos * video.duration));
+      updateProgressAndTime();
+    });
+
+    // Keyboard shortcuts (space, arrows, f, p)
+    document.addEventListener('keydown', (e)=>{
+      // avoid when typing in input/textarea
+      const tag = document.activeElement && document.activeElement.tagName;
+      if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      switch(e.key){
+        case ' ':
+          e.preventDefault();
+          if(video.paused) video.play(); else video.pause();
+          break;
+        case 'ArrowRight':
+          video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
+          break;
+        case 'ArrowLeft':
+          video.currentTime = Math.max(0, video.currentTime - 5);
+          break;
+        case 'ArrowUp':
+          video.volume = Math.min(1, (video.volume || 0) + 0.05);
+          volumeSlider.value = video.volume;
+          break;
+        case 'ArrowDown':
+          video.volume = Math.max(0, (video.volume || 0) - 0.05);
+          volumeSlider.value = video.volume;
+          break;
+        case 'f':
+          fullscreenBtn.click();
+          break;
+        case 'p':
+          pipBtn.click();
+          break;
+      }
+    });
+
+    // Volume & speed controls
+    volumeSlider.addEventListener('input', ()=> { video.volume = parseFloat(volumeSlider.value); });
+    // store last volume in localStorage (optional)
+    volumeSlider.value = (localStorage.getItem('rfv_volume') !== null) ? localStorage.getItem('rfv_volume') : video.volume || 1;
+    volumeSlider.addEventListener('change', ()=> localStorage.setItem('rfv_volume', volumeSlider.value));
+    speedSelect.addEventListener('change', ()=> { video.playbackRate = parseFloat(speedSelect.value); localStorage.setItem('rfv_rate', speedSelect.value); });
+    const savedRate = localStorage.getItem('rfv_rate'); if(savedRate) speedSelect.value = savedRate, video.playbackRate = parseFloat(savedRate);
+
+    // Picture in picture (if available)
+    pipBtn.addEventListener('click', async ()=>{
+      try{
+        if(document.pictureInPictureElement === video) {
+          await document.exitPictureInPicture();
+        } else if (document.pictureInPictureEnabled) {
+          await video.requestPictureInPicture();
+        }
+      }catch(e){}
+    });
+
+    // Fullscreen: request fullscreen on the .video-frame container so controls + stats are hidden in fullscreen
+    fullscreenBtn.addEventListener('click', async ()=>{
+      try{
+        if(!document.fullscreenElement) {
+          if(videoFrame.requestFullscreen) await videoFrame.requestFullscreen();
+          else if(videoFrame.webkitRequestFullscreen) videoFrame.webkitRequestFullscreen();
+        } else {
+          if(document.exitFullscreen) await document.exitFullscreen();
+          else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      }catch(e){}
+    });
+
+    // When entering/exiting fullscreen, set an attribute to help CSS if needed
+    document.addEventListener('fullscreenchange', ()=> {
+      if(document.fullscreenElement){
+        videoFrame.classList.add('fullscreen-like');
+      } else {
+        videoFrame.classList.remove('fullscreen-like');
+      }
+    });
+
+    // make custom-controls visible when focusing video frame (keyboard access)
+    videoFrame.addEventListener('focus', ()=> customControls.classList.add('active'));
+    videoFrame.addEventListener('blur', ()=> customControls.classList.remove('active'));
+
+    /* ---------------- Comments + polls + watch tracking (keeps your original logic) ---------------- */
+
+    // animateNumber helper
+    function animateNumber(el, newVal, duration=600) {
+      if(!el) return;
+      const start = parseInt(el.dataset.animatedValue || String(el.textContent).replace(/[^\d]/g,'')) || 0;
+      newVal = parseInt(newVal) || 0;
+      if (start === newVal) { el.textContent = String(newVal); el.dataset.animatedValue = newVal; return; }
+      const startTime = performance.now();
+      const diff = newVal - start;
+      function step(now){
+        const t = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const current = Math.round(start + diff * eased);
+        el.textContent = String(current);
+        el.dataset.animatedValue = current;
+        if(t < 1) requestAnimationFrame(step);
+        else el.textContent = String(newVal);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Comment rendering
+    function renderComment(c){
+      const w = document.createElement('div');
+      w.className = 'comment new';
+      w.dataset.id = c.id;
+      const author = (c.guest_name && String(c.guest_name).trim()) ? c.guest_name : (c.user || 'Guest');
+      const strong = document.createElement('strong');
+      strong.textContent = author;
+      w.appendChild(strong);
+      const p = document.createElement('p');
+      p.style.margin = '6px 0 8px 0';
+      p.textContent = c.text || '';
+      w.appendChild(p);
+      const small = document.createElement('small');
+      small.dataset.created = c.created_at || new Date().toISOString();
+      small.textContent = c.created_at_display || 'just now';
+      w.appendChild(small);
+      // animate entry
+      requestAnimationFrame(()=>{ w.classList.remove('new'); w.classList.add('show'); });
+      return w;
+    }
+
+    // AJAX POST comment (form contains {% csrf_token %})
+    (function(){
+      const form = document.getElementById('comment-form');
+      const list = document.getElementById('comments-list');
+      const countEl = document.getElementById('comment-count');
+      if(!form) return;
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const text = document.getElementById('comment-text').value.trim();
+        if(!text) return;
+        const fd = new FormData(form);
+        fetch(form.action, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: fd
+        })
+        .then(r => r.json())
+        .then(d => {
+          if(!d.latest_comment) return;
+          const c = d.latest_comment;
+          const norm = { id: c.id, guest_name: c.guest_name || '', user: c.user || null, text: c.text || '', created_at: c.created_at || null, created_at_display: c.created_at || 'just now' };
+          if(!list.querySelector('[data-id="'+norm.id+'"]')) list.prepend(renderComment(norm));
+          if(norm.id && norm.id > parseInt(list.dataset.lastId || '0', 10)) list.dataset.lastId = String(norm.id);
+          countEl.textContent = (d.count !== undefined) ? String(d.count) : String(parseInt(countEl.textContent || '0', 10) + 1);
+          form.reset();
+        }).catch(err => console.error('Comment post error', err));
+      });
+    })();
+
+    // Poll comments + stats
+    (function(){
+      const list = document.getElementById('comments-list');
+      const countEl = document.getElementById('comment-count');
+      const totalViewsEl = document.getElementById('total-views');
+      const liveViewersEl = document.getElementById('live-viewers');
+      if(!list) return;
+      let lastId = parseInt(list.dataset.lastId || '0', 10);
+
+      async function poll(){
+        try{
+          const url = "{% url 'comments_feed' movie.id %}?since=" + encodeURIComponent(lastId);
+          const res = await fetch(url, { headers: {'X-Requested-With': 'XMLHttpRequest'} });
+          if(!res.ok) return;
+          const d = await res.json();
+          (d.comments || []).forEach(c => {
+            if(!list.querySelector('[data-id="'+c.id+'"]')) list.prepend(renderComment(c));
+            if(c.id && c.id > lastId) lastId = c.id;
+          });
+          list.dataset.lastId = String(lastId);
+          if(d.count !== undefined) countEl.textContent = String(d.count);
+          if(d.total_views !== undefined) animateNumber(totalViewsEl, d.total_views, 700);
+          if(d.live_viewers !== undefined) animateNumber(liveViewersEl, d.live_viewers, 700);
+        }catch(e){}
+      }
+
+      // Poll every 5s (respect visibility)
+      setInterval(()=>{ if(!document.hidden) poll(); }, 5000);
+      setTimeout(poll, 1200);
+    })();
+
+    // Watch tracking: start / stop
+    (function(){
+      let watchId = null;
+      function startWatch(){
+        fetch("{% url 'start_watch' movie.id %}", { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'} })
+          .then(r => r.json())
+          .then(d => { if(d && d.watch_id) watchId = d.watch_id; })
+          .catch(()=>{});
+      }
+      function stopWatch(){
+        if(!watchId) return;
+        const u = "{% url 'stop_watch' 0 %}".replace('0', watchId);
+        // use sendBeacon when possible
+        if(navigator.sendBeacon){
+          try { navigator.sendBeacon(u); } catch(e){ /* fallthrough */ }
+        } else {
+          fetch(u, { method: 'POST' }).catch(()=>{});
+        }
+        watchId = null;
+      }
+      // Start when play triggered
+      video.addEventListener('play', ()=> { if(!video.paused) startWatch(); });
+
+      // Visibility & unload
+      document.addEventListener('visibilitychange', ()=> {
+        if(document.hidden) stopWatch(); else if(!video.paused) startWatch();
+      });
+      window.addEventListener('beforeunload', ()=> { stopWatch(); });
+    })();
+
+    /* ---------------- Update uploaded-time and comment times ---------------- */
+
+    // uploaded time "x minutes ago" tick
+    (function(){
+      const el = document.getElementById('uploaded-time');
+      if(!el) return;
+      function tick(){
+        const d = new Date(el.dataset.uploaded);
+        const diff = Math.floor((Date.now() - d) / 1000);
+        let txt = '';
+        if(diff < 60) txt = diff + ' seconds ago';
+        else if(diff < 3600) txt = Math.floor(diff / 60) + ' minutes ago';
+        else if(diff < 86400) txt = Math.floor(diff / 3600) + ' hours ago';
+        else if(diff < 604800) txt = Math.floor(diff / 86400) + ' days ago';
+        else if(diff < 2419200) txt = Math.floor(diff / 604800) + ' weeks ago';
+        else txt = Math.floor(diff / 2419200) + ' months ago';
+        el.textContent = 'Uploaded: ' + txt;
+      }
+      tick(); setInterval(tick, 60000);
+    })();
+
+    // refresh comment "ago" stamps
+    (function(){
+      function formatAgo(diff){
+        if(diff < 60) return diff + ' seconds ago';
+        if(diff < 3600) return Math.floor(diff/60) + ' minutes ago';
+        if(diff < 86400) return Math.floor(diff/3600) + ' hours ago';
+        if(diff < 604800) return Math.floor(diff/86400) + ' days ago';
+        if(diff < 2419200) return Math.floor(diff/604800) + ' weeks ago';
+        return Math.floor(diff/2419200) + ' months ago';
+      }
+      function update(){
+        document.querySelectorAll('#comments-list .comment small[data-created]').forEach(el=>{
+          const d = new Date(el.dataset.created);
+          const diff = Math.floor((Date.now() - d) / 1000);
+          el.textContent = formatAgo(diff);
+        });
+      }
+      update(); setInterval(update, 60000);
+    })();
+
+    // Initial setup: show duration if metadata present
+    if(video.readyState >= 1){
+      updateProgressAndTime();
+      updateBuffer();
+    }
+  })();
+  </script>
+  <div class="back-home">
+  <a href="{% url 'home' %}">🏠 Back to Home</a>
 </div>
 
-<!-- SCRIPTS -->
-<script>
-/* animate numbers */
-function animateNumber(el, newVal, duration=600) {
-  const start = parseInt(el.dataset.animatedValue || el.textContent.replace(/[^\d]/g,''))||0;
-  newVal = parseInt(newVal)||0;
-  if (start===newVal){el.textContent=String(newVal);el.dataset.animatedValue=newVal;return;}
-  const startTime=performance.now();const diff=newVal-start;
-  function step(now){const t=Math.min(1,(now-startTime)/duration);const eased=1-Math.pow(1-t,3);
-    const current=Math.round(start+diff*eased);el.textContent=String(current);el.dataset.animatedValue=current;
-    if(t<1)requestAnimationFrame(step);else el.textContent=String(newVal);}
-  requestAnimationFrame(step);
-}
-
-/* live "uploaded ago" */
-(function(){
-  const el=document.getElementById('uploaded-time');if(!el)return;
-  function tick(){
-    const d=new Date(el.dataset.uploaded);const diff=Math.floor((Date.now()-d)/1000);let txt;
-    if(diff<60)txt=diff+" seconds ago";else if(diff<3600)txt=Math.floor(diff/60)+" minutes ago";
-    else if(diff<86400)txt=Math.floor(diff/3600)+" hours ago";else if(diff<604800)txt=Math.floor(diff/86400)+" days ago";
-    else if(diff<2419200)txt=Math.floor(diff/604800)+" weeks ago";else if(diff<29030400)txt=Math.floor(diff/2419200)+" months ago";
-    else txt=Math.floor(diff/29030400)+" years ago";el.textContent="Uploaded: "+txt;}
-  tick();setInterval(tick,60000);
-})();
-
-/* NEW: auto-refresh comment timestamps */
-(function(){
-  function formatAgo(diff) {
-    if(diff < 60) return diff+" seconds ago";
-    if(diff < 3600) return Math.floor(diff/60)+" minutes ago";
-    if(diff < 86400) return Math.floor(diff/3600)+" hours ago";
-    if(diff < 604800) return Math.floor(diff/86400)+" days ago";
-    if(diff < 2419200) return Math.floor(diff/604800)+" weeks ago";
-    if(diff < 29030400) return Math.floor(diff/2419200)+" months ago";
-    return Math.floor(diff/29030400)+" years ago";
-  }
-
-  function updateTimes(){
-    document.querySelectorAll('#comments-list .comment small[data-created]').forEach(el=>{
-      const d = new Date(el.dataset.created);
-      const diff = Math.floor((Date.now()-d)/1000);
-      el.textContent = formatAgo(diff);
-    });
-  }
-
-  // make available globally so renderComment can call it
-  window.updateCommentTimes = updateTimes;
-
-  updateTimes();
-  setInterval(updateTimes, 60000);
-})();
-
-/* helpers for comments */
-function renderComment(c){
-  const w = document.createElement('div');
-  w.className = 'comment new';
-  w.dataset.id = c.id;
-
-  const a = (c.guest_name && String(c.guest_name).trim()) ? c.guest_name : (c.user || 'Guest');
-  const strong = document.createElement('strong');
-  strong.textContent = a + ':';
-  w.appendChild(strong);
-
-  const p = document.createElement('p');
-  p.className = 'mb-1';
-  p.textContent = c.text || '';
-  w.appendChild(p);
-
-  const small = document.createElement('small');
-  // ensure data-created is always set
-  if (c.created_at) {
-    small.dataset.created = c.created_at; // ISO datetime from server
-  } else {
-    small.dataset.created = new Date().toISOString(); // fallback
-  }
-  small.textContent = c.created_at_display || "just now";
-  w.appendChild(small);
-
-  requestAnimationFrame(()=>{w.classList.remove('new');w.classList.add('show');});
-
-  // immediately update this timestamp
-  if (typeof window.updateCommentTimes === 'function') {
-    window.updateCommentTimes();
-  }
-
-  return w;
-}
-
-/* ajax post comment */
-(function(){
-  const form=document.getElementById('comment-form'),list=document.getElementById('comments-list'),countEl=document.getElementById('comment-count');
-  if(!form)return;
-  form.addEventListener('submit',function(e){e.preventDefault();
-    const t=document.getElementById('comment-text').value.trim();if(!t)return;
-    const fd=new FormData(form);
-    fetch(form.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:fd})
-    .then(r=>r.json()).then(d=>{
-      if(!d.latest_comment)return;const c=d.latest_comment;
-      const norm={id:c.id,guest_name:c.guest_name||"",user:c.user||null,text:c.text||"",created_at:c.created_at||null,created_at_display:c.created_at_display||"just now"};
-      if(!list.querySelector('[data-id="'+norm.id+'"]'))list.prepend(renderComment(norm));
-      if(norm.id && norm.id>parseInt(list.dataset.lastId||'0',10))list.dataset.lastId=String(norm.id);
-      countEl.textContent=(d.count!==undefined)?String(d.count):String(parseInt(countEl.textContent||'0',10)+1);
-      form.reset();
-    }).catch(err=>console.error('Error posting:',err));
-  });
-})();
-
-/* poll comments + stats */
-(function(){
-  const list=document.getElementById('comments-list'),countEl=document.getElementById('comment-count'),
-        totalViewsEl=document.getElementById('total-views'),liveViewersEl=document.getElementById('live-viewers');
-  if(!list)return;let lastId=parseInt(list.dataset.lastId||'0',10);
-  function poll(){
-    const url="{% url 'comments_feed' movie.id %}?since="+encodeURIComponent(lastId);
-    fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{
-      (d.comments||[]).forEach(c=>{if(!list.querySelector('[data-id="'+c.id+'"]'))list.prepend(renderComment(c));if(c.id&&c.id>lastId)lastId=c.id;});
-      list.dataset.lastId=String(lastId);
-      if(d.count!==undefined)countEl.textContent=String(d.count);
-      if(d.total_views!==undefined)animateNumber(totalViewsEl,d.total_views,700);
-      if(d.live_viewers!==undefined)animateNumber(liveViewersEl,d.live_viewers,700);
-    }).catch(()=>{});
-  }
-  setInterval(()=>{if(!document.hidden)poll();},5000);setTimeout(poll,1200);
-})();
-
-/* watch tracking */
-(function(){
-  let watchId=null;const v=document.getElementById('movie-player');
-  function start(){fetch("{% url 'start_watch' movie.id %}",{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}})
-    .then(r=>r.json()).then(d=>{if(d.watch_id)watchId=d.watch_id;}).catch(()=>{});}
-  function stop(){if(!watchId)return;const u="{% url 'stop_watch' 0 %}".replace('0',watchId);
-    if(navigator.sendBeacon){try{navigator.sendBeacon(u);}catch(e){}}else fetch(u,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}}).catch(()=>{});
-    watchId=null;}
-  if(v){v.addEventListener('play',start);v.addEventListener('pause',stop);v.addEventListener('ended',stop);window.addEventListener('beforeunload',stop);}
-})();
-</script>
 </body>
 </html>
