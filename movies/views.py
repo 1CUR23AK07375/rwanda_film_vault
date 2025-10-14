@@ -29,79 +29,56 @@ def _safe_geoip(ip):
 # ============================================================
 # Home Page
 # ============================================================
-# movies/views.py (update home view)
 def home(request):
-    # Session tracking
-    request.session["visits"] = request.session.get("visits", 0) + 1
+    """
+    Homepage view: shows trending, new releases, and all movies.
+    Provides genre list for filter dropdown.
+    """
+    # --- Get query params ---
+    search_query = request.GET.get('q', '').strip()
+    selected_genre = request.GET.get('genre', '').strip()
+    selected_sort = request.GET.get('sort', '').strip()
 
-    # Visitor tracking
-    try:
-        ip = get_client_ip(request)
-    except Exception:
-        ip = "0.0.0.0"
+    # --- Base queryset ---
+    movies_qs = Movie.objects.all()
 
-    visitor, created = Visitor.objects.get_or_create(ip_address=ip)
-    country, city, lat, lng = _safe_geoip(ip)
+    # --- Search filter ---
+    if search_query:
+        movies_qs = movies_qs.filter(name__icontains=search_query)
 
-    visitor.country = country or visitor.country
-    visitor.city = city or visitor.city
-    visitor.lat = lat or visitor.lat
-    visitor.lng = lng or visitor.lng
-    visitor.last_visit = timezone.now()
-    visitor.visit_count = visitor.visit_count + 1 if not created else 1
-    visitor.save(update_fields=["country", "city", "lat", "lng", "last_visit", "visit_count"])
+    # --- Genre filter ---
+    if selected_genre:
+        movies_qs = movies_qs.filter(genre__iexact=selected_genre)
 
-    # Query parameters
-    q = (request.GET.get("q") or "").strip()
-    sort = (request.GET.get("sort") or "").strip().lower()
-    genre_filter = (request.GET.get("genre") or "").strip()
-
-    # Base queryset
-    base_qs = Movie.objects.all()
-
-    # Apply search filter
-    if q:
-        base_qs = base_qs.filter(Q(name__icontains=q) | Q(description__icontains=q))
-
-    # Apply genre filter
-    if genre_filter:
-        base_qs = base_qs.filter(genre__iexact=genre_filter)
-
-    # Sorting
-    if sort == "trending":
-        main_ordering = ("-total_views", "-uploaded_at")
-    elif sort == "new":
-        main_ordering = ("-uploaded_at",)
+    # --- Sorting ---
+    if selected_sort == 'trending':
+        # trending = most downloaded
+        movies_qs = movies_qs.order_by('-download_count', '-uploaded_at')
+    elif selected_sort == 'new':
+        movies_qs = movies_qs.order_by('-uploaded_at')
     else:
-        main_ordering = ("-uploaded_at",)
+        movies_qs = movies_qs.order_by('-uploaded_at')
 
-    # Non-overlapping sections
-    trending_qs = base_qs.order_by("-total_views", "-uploaded_at")
-    trending_list = list(trending_qs[:TRENDING_LIMIT])
-    trending_ids = [m.id for m in trending_list]
+    # --- Separate sections ---
+    trending_movies = Movie.objects.order_by('-download_count', '-uploaded_at')[:6]
+    new_releases = Movie.objects.order_by('-uploaded_at')[:6]
+    all_movies = movies_qs
 
-    new_qs = base_qs.exclude(id__in=trending_ids).order_by("-uploaded_at")
-    new_list = list(new_qs[:NEW_RELEASES_LIMIT])
-    new_ids = [m.id for m in new_list]
-
-    remaining_qs = base_qs.exclude(id__in=(trending_ids + new_ids)).order_by(*main_ordering)
-    main_list = list(remaining_qs[:MAIN_PAGE_LIMIT])
-
-    # All genres for dropdown (auto-populate)
-    all_genres = Movie.objects.values_list("genre", flat=True).distinct().order_by("genre")
+    # --- Unique genres for dropdown ---
+    all_genres = Movie.objects.values_list('genre', flat=True).distinct().exclude(genre__isnull=True).exclude(genre__exact='')
 
     context = {
-        "movies": main_list,
-        "trending_movies": trending_list,
-        "new_releases": new_list,
-        "total_movies": Movie.objects.count(),
-        "session_visits": request.session["visits"],
-        "selected_sort": sort,
-        "selected_genre": genre_filter,
-        "search_query": q,
-        "all_genres": all_genres,
+        'search_query': search_query,
+        'selected_genre': selected_genre,
+        'selected_sort': selected_sort,
+        'trending_movies': trending_movies,
+        'new_releases': new_releases,
+        'movies': all_movies,
+        'genres': all_genres,  # for your <select> in template
+        'total_movies': Movie.objects.count(),
     }
-    return render(request, "movies/home.html", context)
+
+    return render(request, 'movies/home.html', context)
 
 # ============================================================
 # Watch Movie + Comments
