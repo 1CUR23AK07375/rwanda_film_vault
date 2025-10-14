@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Movie, Comment, WatchHistory, Visitor, DownloadHistory
-from django.db.models import Sum  # ✅ add this import
+from django.db.models import Sum  # ✅ for aggregations
 
 
 @admin.register(Comment)
@@ -37,12 +37,18 @@ class DownloadHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
-    list_display = ("name", "download_count", "uploaded_at")
+    list_display = ("name", "genre", "download_count", "uploaded_at")  # added genre
     ordering = ("-download_count", "-uploaded_at")
-    search_fields = ("name",)
+    search_fields = ("name", "genre")  # include genre in search
+    list_filter = ("genre",)  # allow filtering by genre in the sidebar
 
     def changelist_view(self, request, extra_context=None):
-        # compute values for the dashboard
+        """
+        Customize the admin dashboard with extra stats:
+        - Total downloads
+        - Top downloaded movie
+        - Latest uploaded movie
+        """
         total = Movie.objects.aggregate(total=Sum("download_count"))["total"] or 0
         top = Movie.objects.order_by("-download_count").first()
         latest = Movie.objects.order_by("-uploaded_at").first()
@@ -52,8 +58,9 @@ class MovieAdmin(admin.ModelAdmin):
             "top_movie": top,
             "latest_movie": latest,
         }
+
         if extra_context:
             extra.update(extra_context)
 
-        # call the default changelist with our extra context
+        # Call the default changelist view with our extra context
         return super().changelist_view(request, extra_context=extra)

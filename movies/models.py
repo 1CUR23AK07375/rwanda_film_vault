@@ -33,6 +33,7 @@ class Movie(models.Model):
     # counters
     total_views = models.PositiveIntegerField(default=0)
     download_count = models.PositiveIntegerField(default=0)
+    genre = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         ordering = ["-uploaded_at"]

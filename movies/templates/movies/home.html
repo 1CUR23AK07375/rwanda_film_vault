@@ -395,58 +395,57 @@
   </section>
 
   <!-- All Movies (with Genre Filter) -->
-  <section>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4>🎬 All Movies</h4>
-      <!-- Genre Filter -->
-      <select id="genre-filter" class="form-select w-auto">
-        <option value="">All Genres</option>
-        {% for genre in genres %}
-          <option value="{{ genre.name }}">{{ genre.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="row g-4" id="all-movies-container">
-      {% for movie in movies %}
-        <div class="col-12 col-sm-6 col-md-6 col-lg-4" data-movie-id="{{ movie.id }}">
-          <article class="movie-card" data-genre="{{ movie.genre|default:'' }}">
-            {% if movie.image_url %}
-              <img src="{{ movie.image_url }}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
-            {% else %}
-              <img src="{% static 'movies/default_image.png' %}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
-            {% endif %}
-            <div class="card-body">
-              <h5 class="card-title">{{ movie.name }}</h5>
-              <div class="movie-meta">
-                <span class="comments" data-movie-id="{{ movie.id }}">{{ movie.comment_set.count }} Comments</span>
-                {% if movie.genre %}
-                  <span class="ms-auto">{{ movie.genre }}</span>
-                {% endif %}
-              </div>
-              <div class="movie-actions mt-2">
-                <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
-                {% if movie.download_url %}
-                  <a href="{% url 'download_movie' movie.id %}">⬇ Download</a>
-                {% endif %}
-              </div>
-              <div class="uploaded-time mt-2"
-                   id="time-{{ movie.id }}"
-                   data-uploaded="{{ movie.uploaded_at|date:'U' }}">
-                Uploaded: {{ movie.uploaded_at|timesince }} ago
-              </div>
-            </div>
-          </article>
-        </div>
-      {% empty %}
-        <p class="text-center">No movies available yet.</p>
+<section>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>🎬 All Movies</h4>
+    <!-- Genre Filter -->
+    <select id="genre-filter" class="form-select w-auto">
+      <option value="">All Genres</option>
+      {% for genre in genres %}
+        <option value="{{ genre.name }}">{{ genre.name }}</option>
       {% endfor %}
-    </div>
+    </select>
+  </div>
 
-    <div id="no-movies-result" class="text-center">
-      <p class="mb-0">No movies match the selected genre.</p>
-    </div>
-  </section>
+  <div class="row g-4" id="all-movies-container">
+    {% for movie in movies %}
+      <div class="col-12 col-sm-6 col-md-6 col-lg-4" data-movie-id="{{ movie.id }}">
+        <article class="movie-card" data-genre="{{ movie.genre|default:'' }}">
+          {% if movie.image_url %}
+            <img src="{{ movie.image_url }}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+          {% else %}
+            <img src="{% static 'movies/default_image.png' %}" alt="{{ movie.name }}" class="movie-thumb" loading="lazy">
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ movie.name }}</h5>
+            <div class="movie-meta">
+              <span class="comments" data-movie-id="{{ movie.id }}">{{ movie.comment_set.count }} Comments</span>
+              {% if movie.genre %}
+                <span class="ms-auto">{{ movie.genre }}</span>
+              {% endif %}
+            </div>
+            <div class="movie-actions mt-2">
+              <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+              {% if movie.download_url %}
+                <a href="{% url 'download_movie' movie.id %}">⬇ Download</a>
+              {% endif %}
+            </div>
+            <div class="uploaded-time mt-2"
+                 id="time-{{ movie.id }}"
+                 data-uploaded="{{ movie.uploaded_at|date:'U' }}">
+              Uploaded: {{ movie.uploaded_at|timesince }} ago
+            </div>
+          </div>
+        </article>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="no-movies-result" class="text-center">
+    <p class="mb-0">No movies match the selected genre.</p>
+  </div>
+</section>
+
 </main>
 
 <!-- FOOTER -->
