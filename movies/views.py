@@ -65,7 +65,14 @@ def home(request):
     all_movies = movies_qs
 
     # --- Unique genres for dropdown ---
-    all_genres = Movie.objects.values_list('genre', flat=True).distinct().exclude(genre__isnull=True).exclude(genre__exact='')
+    all_genres = Movie.objects.exclude(genre__isnull=True)\
+                          .exclude(genre__exact='')\
+                          .values_list('genre', flat=True)\
+                          .distinct()\
+                          .order_by('genre')
+    
+    all_genres = Movie.objects.exclude(genre__isnull=True).exclude(genre__exact='').values_list('genre', flat=True).distinct().order_by('genre')
+
 
     context = {
         'search_query': search_query,
