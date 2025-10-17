@@ -17,7 +17,7 @@ GEOIP_PATH = os.path.join(BASE_DIR, "GeoLite2-City.mmdb")  # Use BASE_DIR after 
 # --- Security ---
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-secret-key-for-dev')
 DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ['dusa-films.onrender.com', 'localhost', '127.0.0.1']
 
 # --- Applications ---
 INSTALLED_APPS = [
@@ -68,7 +68,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get(
             'DATABASE_URL',
-            'postgresql://postgres:Paccy@100@localhost:5432/rwanda_film_vault_db'
+            'postgresql://postgres:Paccy%100@localhost:5432/rwanda_film_vault_db'
         ),
         conn_max_age=600,  # keep connection alive
     )
