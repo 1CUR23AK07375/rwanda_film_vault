@@ -8,15 +8,16 @@ See https://docs.djangoproject.com/en/5.2/topics/settings/
 
 from pathlib import Path
 import os
+import dj_database_url  # ✅ Added for Render PostgreSQL support
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent  # Must come first!
 GEOIP_PATH = os.path.join(BASE_DIR, "GeoLite2-City.mmdb")  # Use BASE_DIR after defining it
 
 # --- Security ---
-SECRET_KEY = 'django-insecure-vvk_6b%u0y*7u=nl0_l!p#hb9bs9)+e36vvfb=98uh9@l&f$u8'
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-secret-key-for-dev')
+DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # --- Applications ---
 INSTALLED_APPS = [
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
 # --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Added for static files on Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,14 +65,13 @@ TEMPLATES = [
 
 # --- Database ---
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'rwanda_film_vault_db',
-        'USER': 'postgres',  # Make sure your PostgreSQL username
-        'PASSWORD': 'Paccy@100',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get(
+            'DATABASE_URL',
+            'postgresql://postgres:Paccy@100@localhost:5432/rwanda_film_vault_db'
+        ),
+        conn_max_age=600,  # keep connection alive
+    )
 }
 
 # --- Password Validation ---
@@ -91,10 +92,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]  # Optional: custom static folder
 STATIC_ROOT = BASE_DIR / "staticfiles"   # For production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- Default Primary Key Field Type ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
