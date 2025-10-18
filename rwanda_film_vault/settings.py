@@ -9,6 +9,8 @@ See https://docs.djangoproject.com/en/5.2/topics/settings/
 from pathlib import Path
 import os
 import dj_database_url  # ✅ Added for Render PostgreSQL support
+from dotenv import load_dotenv
+load_dotenv()  # ✅ This ensures .env file is loaded
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent  # Must come first!
