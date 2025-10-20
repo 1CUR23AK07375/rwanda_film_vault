@@ -272,7 +272,7 @@
     <!-- Right side buttons -->
     <div class="d-flex align-items-center ms-auto">
       {% if request.user.is_authenticated and request.user.is_staff %}
-        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
+        <a href="{% url 'movies:admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
       {% endif %}
       
     </div>
@@ -286,7 +286,8 @@
     <p>The Ocean Of Movies</p>
 </div>
 <div class="search-bar" role="search">
-  <form method="GET" action="{% url 'home' %}" autocomplete="off">
+ <form method="GET" action="{% url 'movies:home' %}" autocomplete="off">
+
     <div class="search-wrapper">
       <input id="search-input" name="q" type="search" class="search-input" placeholder="Search movies..." value="{{ request.GET.q|default:'' }}">
       <button class="search-btn" type="submit">
@@ -300,7 +301,7 @@
 
     <div class="d-flex align-items-center ms-auto">
       {% if request.user.is_authenticated and request.user.is_staff %}
-        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
+        <a href="{% url 'movies:admin_dashboard' %}" class="btn btn-outline-light btn-sm me-2">Admin</a>
       {% endif %}
       
     </div>
@@ -309,7 +310,8 @@
 
 <!-- SEARCH -->
 <div class="search-bar" role="search">
-  <form method="GET" action="{% url 'home' %}" class="d-flex justify-content-center" autocomplete="off">
+<form method="GET" action="{% url 'movies:home' %}" class="d-flex justify-content-center" autocomplete="off">
+
     <div class="input-group search-wrapper">
       <input id="search-input" name="q" type="search" class="search-input" placeholder="Search movies..." value="{{ request.GET.q|default:'' }}">
       <button class="search-btn" type="submit">🔍</button>
@@ -331,7 +333,9 @@
   <section class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4>🔥 Trending Movies</h4>
-      <a class="btn btn-sm btn-outline-primary" href="{% url 'home' %}?sort=trending">See all</a>
+     <a class="btn btn-sm btn-outline-primary" href="{% url 'movies:home' %}?sort=trending">See all</a>
+
+
     </div>
     <div class="row g-4">
       {% for movie in trending_movies %}
@@ -345,7 +349,7 @@
             <div class="card-body">
               <h5 class="card-title">{{ movie.name }}</h5>
               <div class="movie-actions">
-                <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+                <a href="{% url 'movies:watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
               </div>
               <div class="uploaded-time mt-2"
                    id="time-{{ movie.id }}"
@@ -365,7 +369,8 @@
   <section class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4>🆕 New Releases</h4>
-      <a class="btn btn-sm btn-outline-primary" href="{% url 'home' %}?sort=new">See all</a>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'movies:home' %}?sort=new">See all</a>
+
     </div>
     <div class="row g-4">
       {% for movie in new_releases %}
@@ -379,7 +384,7 @@
             <div class="card-body">
               <h5 class="card-title">{{ movie.name }}</h5>
               <div class="movie-actions">
-                <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+                <a href="{% url 'movies:watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
               </div>
               <div class="uploaded-time mt-2"
                    id="time-{{ movie.id }}"
@@ -426,9 +431,9 @@
               {% endif %}
             </div>
             <div class="movie-actions mt-2">
-              <a href="{% url 'watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
+              <a href="{% url 'movies:watch_movie' movie.id %}" class="watch-btn">▶ Watch</a>
               {% if movie.download_url %}
-                <a href="{% url 'download_movie' movie.id %}">⬇ Download</a>
+                <a href="{% url 'movies:download_movie' movie.id %}">⬇ Download</a>
               {% endif %}
             </div>
             <div class="uploaded-time mt-2"

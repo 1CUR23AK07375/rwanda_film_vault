@@ -266,7 +266,8 @@
 
         {% if movie.download_url %}
         <div class="download-btn">
-          <a href="{% url 'download_movie' movie.id %}" target="_blank" rel="noopener">⬇ Download movie</a>
+        <a href="{% url 'movies:download_movie' movie.id %}" target="_blank" rel="noopener">⬇ Download movie</a>
+
         </div>
         {% endif %}
       </div>
@@ -284,7 +285,8 @@
 
           <h5 style="margin-top:12px;">💬 Comments (<span id="comment-count">{{ comments|length }}</span>)</h5>
 
-          <form id="comment-form" class="comment-form" method="POST" action="{% url 'watch_movie' movie.id %}" novalidate>
+         <form id="comment-form" class="comment-form" method="POST" action="{% url 'movies:watch_movie' movie.id %}" novalidate>
+
             {% csrf_token %}
             <div class="mb-2">
               <input type="text" name="guest_name" class="form-control" placeholder="Your name (optional)" aria-label="Your name">
@@ -557,7 +559,8 @@
 
       async function poll(){
         try{
-          const url = "{% url 'comments_feed' movie.id %}?since=" + encodeURIComponent(lastId);
+         const url = "{% url 'movies:comments_feed' movie.id %}?since=" + encodeURIComponent(lastId);
+
           const res = await fetch(url, { headers: {'X-Requested-With': 'XMLHttpRequest'} });
           if(!res.ok) return;
           const d = await res.json();
@@ -581,14 +584,16 @@
     (function(){
       let watchId = null;
       function startWatch(){
-        fetch("{% url 'start_watch' movie.id %}", { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'} })
+       fetch("{% url 'movies:start_watch' movie.id %}", { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'} })
+
           .then(r => r.json())
           .then(d => { if(d && d.watch_id) watchId = d.watch_id; })
           .catch(()=>{});
       }
       function stopWatch(){
         if(!watchId) return;
-        const u = "{% url 'stop_watch' 0 %}".replace('0', watchId);
+        const u = "{% url 'movies:stop_watch' 0 %}".replace('0', watchId);
+
         // use sendBeacon when possible
         if(navigator.sendBeacon){
           try { navigator.sendBeacon(u); } catch(e){ /* fallthrough */ }
@@ -656,7 +661,8 @@
   })();
   </script>
   <div class="back-home">
-  <a href="{% url 'home' %}">🏠 Back to Home</a>
+  <a href="{% url 'movies:home' %}">🏠 Back to Home</a>
+
 </div>
 
 </body>
