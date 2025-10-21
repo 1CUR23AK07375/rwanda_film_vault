@@ -150,7 +150,8 @@
     </div>
 
     <div class="mt-4 text-end">
-      <a href="{% url 'home' %}" class="btn btn-primary">← Back to Home</a>
+<a href="{% url 'movies:home' %}" class="btn btn-primary">← Back to Home</a>
+
     </div>
 </div>
 
@@ -170,7 +171,8 @@ let allVisitors = [];
 /* ---------- Summary / table / charts ---------- */
 async function loadVisitors() {
     try {
-        const res = await fetch("{% url 'visitor_stats_api' %}");
+       const res = await fetch("{% url 'movies:visitor_stats_api' %}");
+
         const data = await res.json();
         allVisitors = data.visitors || []; // save globally
 
@@ -222,7 +224,8 @@ function renderVisitorTable(){
 /* ---------- Charts ---------- */
 async function loadCharts(){
     try {
-        const dailyRes = await fetch("{% url 'visitor_chart_data' %}");
+      const dailyRes = await fetch("{% url 'movies:visitor_chart_data' %}");
+
         const dailyData = await dailyRes.json();
         const ctx1 = document.getElementById('daily-visits-chart').getContext('2d');
         new Chart(ctx1, {
@@ -241,7 +244,8 @@ async function loadCharts(){
             options: { responsive: true, plugins:{legend:{display:false}} }
         });
 
-        const countryRes = await fetch("{% url 'visitor_country_data' %}");
+      const countryRes = await fetch("{% url 'movies:visitor_country_data' %}");
+
         const countryData = await countryRes.json();
         const ctx2 = document.getElementById('country-chart').getContext('2d');
         new Chart(ctx2, {
@@ -293,7 +297,8 @@ async function initMap(){
 async function populateMap(){
     if(!map) await initMap();
     try {
-        const res = await fetch("{% url 'visitor_map_data' %}");
+        const res = await fetch("{% url 'movies:visitor_map_data' %}");
+
         const payload = await res.json();
         const rows = payload.data || [];
 
