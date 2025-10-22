@@ -73,6 +73,7 @@ DATABASES = {
             'postgresql://postgres:Paccy%100@localhost:5432/rwanda_film_vault_db'
         ),
         conn_max_age=600,  # keep connection alive
+        ssl_require=True,  # ✅ Add this line
     )
 }
 
