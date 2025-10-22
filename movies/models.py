@@ -2,6 +2,10 @@ from datetime import timedelta
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+import os
+from moviepy.editor import VideoFileClip
+from django.conf import settings
+
 
 
 # ===============================
@@ -30,10 +34,13 @@ class Movie(models.Model):
     video_url = models.URLField(max_length=500, blank=True, null=True)
     download_url = models.URLField(max_length=500, blank=True, null=True)
 
-    # counters
+    # Counters
     total_views = models.PositiveIntegerField(default=0)
     download_count = models.PositiveIntegerField(default=0)
     genre = models.CharField(max_length=100, blank=True, null=True)
+
+    # New field for converted video
+    converted_video = models.FileField(upload_to='converted_movies/', blank=True, null=True)
 
     class Meta:
         ordering = ["-uploaded_at"]
@@ -45,27 +52,36 @@ class Movie(models.Model):
     def __str__(self):
         return self.name
 
-    def recalc_counters_from_history(self):
+    def save(self, *args, **kwargs):
         """
-        Recalculate total_views and download_count from related history tables.
-        Useful for consistency checks or admin commands.
+        Override save method to automatically convert the uploaded video
+        into a universal format (MP4 + AAC audio).
         """
-        views = self.watch_history.count()
-        downloads = self.download_history.count()
+        super().save(*args, **kwargs)
 
-        update_fields = []
-        if self.total_views != views:
-            self.total_views = views
-            update_fields.append("total_views")
-        if self.download_count != downloads:
-            self.download_count = downloads
-            update_fields.append("download_count")
+        # Convert only if video_url is set and converted_video not yet created
+        if self.video_url and not self.converted_video:
+            try:
+                input_path = os.path.join(settings.MEDIA_ROOT, self.video_url.replace(settings.MEDIA_URL, ''))
+                base, _ = os.path.splitext(input_path)
+                output_path = base + "_converted.mp4"
 
-        if update_fields:
-            self.save(update_fields=update_fields)
+                clip = VideoFileClip(input_path)
+                clip.write_videofile(
+                    output_path,
+                    codec='libx264',
+                    audio_codec='aac',
+                    temp_audiofile='temp-audio.m4a',
+                    remove_temp=True
+                )
+                clip.close()
 
-        return views, downloads
+                relative_path = os.path.relpath(output_path, settings.MEDIA_ROOT)
+                self.converted_video.name = relative_path
+                super().save(update_fields=['converted_video'])
 
+            except Exception as e:
+                print(f"⚠️ Video conversion failed: {e}")
 
 # ===============================
 # Comment model
