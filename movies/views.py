@@ -345,17 +345,18 @@ def search_suggestions(request):
 def latest_movies(request):
     recent_time = now() - timedelta(minutes=10)
     movies = Movie.objects.filter(uploaded_at__gte=recent_time).order_by('-uploaded_at')
-    data = [{'id': m.id, 'name': m.name, 'image_url': m.image_url or '', 'genre': m.genre or '', 'download_url': m.download_url or ''} for m in movies]
+    data = [
+        {
+            'id': m.id,
+            'name': m.name,
+            'image_url': m.image_url or '',
+            'genre': m.genre or '',
+            'download_url': m.download_url or ''
+        }
+        for m in movies
+    ]
     return JsonResponse(data, safe=False)
 
-
-from django.http import JsonResponse
-from .models import Movie, Comment
-
-def latest_movies(request):
-    movies = Movie.objects.order_by('-created_at')[:5]
-    data = [{'id': m.id, 'title': m.title} for m in movies]
-    return JsonResponse(data, safe=False)
 
 def comment_count(request, movie_id):
     count = Comment.objects.filter(movie_id=movie_id).count()
