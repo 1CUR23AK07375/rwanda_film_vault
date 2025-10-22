@@ -20,6 +20,7 @@ GEOIP_PATH = os.path.join(BASE_DIR, "GeoLite2-City.mmdb")  # Use BASE_DIR after 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-secret-key-for-dev')
 DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 ALLOWED_HOSTS = ['dusa-films-k5nf.onrender.com', 'localhost', '127.0.0.1']
+
 # --- Applications ---
 INSTALLED_APPS = [
     'django.contrib.admin',
